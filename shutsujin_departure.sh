@@ -291,22 +291,22 @@ log_war "⚔️ 家老・足軽の陣を構築中（9名配備）..."
 tmux new-session -d -s multiagent -n "agents"
 
 # 3x3グリッド作成（合計9ペイン）
-# 最初に3列に分割
-tmux split-window -h -t "multiagent:0"
-tmux split-window -h -t "multiagent:0"
+# ※ detach中でも確実に multiagent セッションを操作できるように、すべて -t を指定する
+# まず3列
+tmux split-window -h -t "multiagent:0.0"
+tmux split-window -h -t "multiagent:0.0"
 
-# 各列を3行に分割
-tmux select-pane -t "multiagent:0.0"
-tmux split-window -v
-tmux split-window -v
+# 各列を3行（左=0, 中=1, 右=2）
+tmux split-window -v -t "multiagent:0.0"
+tmux split-window -v -t "multiagent:0.3"
 
-tmux select-pane -t "multiagent:0.3"
-tmux split-window -v
-tmux split-window -v
+tmux split-window -v -t "multiagent:0.1"
+tmux split-window -v -t "multiagent:0.5"
 
-tmux select-pane -t "multiagent:0.6"
-tmux split-window -v
-tmux split-window -v
+tmux split-window -v -t "multiagent:0.2"
+tmux split-window -v -t "multiagent:0.7"
+
+tmux select-layout -t "multiagent:0" tiled
 
 # ペインタイトル設定（0: karo, 1-8: ashigaru1-8）
 PANE_TITLES=("karo" "ashigaru1" "ashigaru2" "ashigaru3" "ashigaru4" "ashigaru5" "ashigaru6" "ashigaru7" "ashigaru8")

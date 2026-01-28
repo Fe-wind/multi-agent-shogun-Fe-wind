@@ -249,9 +249,9 @@ for dir in "${DIRECTORIES[@]}"; do
     if [ ! -d "$SCRIPT_DIR/$dir" ]; then
         mkdir -p "$SCRIPT_DIR/$dir"
         log_info "作成: $dir/"
-        ((CREATED_COUNT++))
+        CREATED_COUNT=$((CREATED_COUNT+1))
     else
-        ((EXISTED_COUNT++))
+        EXISTED_COUNT=$((EXISTED_COUNT+1))
     fi
 done
 
