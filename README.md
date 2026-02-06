@@ -97,11 +97,15 @@ That's it! The installer handles everything automatically.
 
 #### 📅 Daily Startup (After First Install)
 
-Open **Ubuntu terminal** (WSL) and run:
+Open **Ubuntu terminal** (WSL), navigate to your project directory, and run:
 
 ```bash
-cd /mnt/c/tools/multi-agent-shogun
-./shutsujin_departure.sh
+# Navigate to your project directory, then launch
+cd /mnt/c/Users/you/my-project
+/mnt/c/tools/multi-agent-shogun/shutsujin_departure.sh
+
+# Or specify the project directory with -p
+/mnt/c/tools/multi-agent-shogun/shutsujin_departure.sh -p /mnt/c/Users/you/my-project
 ```
 
 ---
@@ -126,8 +130,12 @@ chmod +x *.sh
 ### Daily Startup
 
 ```bash
-cd ~/multi-agent-shogun
-./shutsujin_departure.sh
+# Navigate to your project directory, then launch
+cd ~/my-project
+~/multi-agent-shogun/shutsujin_departure.sh
+
+# Or specify the project directory with -p
+~/multi-agent-shogun/shutsujin_departure.sh -p ~/my-project
 ```
 
 </details>
@@ -179,6 +187,7 @@ Then restart your computer and run `install.bat` again.
 - ✅ Launches Claude Code on all 10 agents
 - ✅ Automatically loads instruction files for each agent
 - ✅ Resets queue files for a fresh start
+- ✅ Sets all panes' working directory to the target project (launcher mode)
 
 **After running, all agents are ready to receive commands immediately!**
 
@@ -215,6 +224,49 @@ After running either option, **10 AI agents** will start automatically:
 You'll see tmux sessions created:
 - `shogun` - Connect here to give commands
 - `multiagent` - Workers running in background
+
+---
+
+## 🚀 Launcher Mode (Use with Any Project)
+
+multi-agent-shogun can be installed in a fixed location and **launched from any project directory**.
+
+### How It Works
+
+| Variable | Meaning | Auto-set |
+|----------|---------|----------|
+| `SHOGUN_HOME` | Tool installation directory | Resolved from script location |
+| `PROJECT_DIR` | Target project directory | Current directory, or specified with `-p` |
+
+- All tmux panes' working directory is set to `PROJECT_DIR`
+- System files (queue/, config/, etc.) are referenced from `SHOGUN_HOME`
+- When `SHOGUN_HOME == PROJECT_DIR`, it works the same as before (backward compatible)
+
+### How to Launch
+
+```bash
+# Method 1: Navigate to your project, then launch
+cd ~/my-app
+~/tools/multi-agent-shogun/shutsujin_departure.sh
+
+# Method 2: Specify with -p flag (from anywhere)
+~/tools/multi-agent-shogun/shutsujin_departure.sh -p ~/my-app
+
+# Set up an alias for convenience (~/.bashrc)
+alias shogun='~/tools/multi-agent-shogun/shutsujin_departure.sh'
+# → cd ~/my-app && shogun
+```
+
+### After Launch
+
+```
+SHOGUN_HOME (~/tools/multi-agent-shogun/)     PROJECT_DIR (~/my-app/)
+├── queue/          ← System communication    ├── src/          ← Ashigaru work here
+├── config/         ← Settings                ├── package.json
+├── instructions/   ← Agent instructions      └── ...
+├── dashboard.md    ← Progress reports
+└── ...
+```
 
 ---
 
@@ -550,8 +602,11 @@ language: en   # Japanese + English translation
 <summary><b>shutsujin_departure.sh Options</b> (Click to expand)</summary>
 
 ```bash
-# Default: Full startup (tmux sessions + Claude Code launch)
-./shutsujin_departure.sh
+# Default: Launch with current directory as the target project
+cd ~/my-project && ~/tools/multi-agent-shogun/shutsujin_departure.sh
+
+# Specify project directory with -p
+~/tools/multi-agent-shogun/shutsujin_departure.sh -p ~/my-project
 
 # Session setup only (without launching Claude Code)
 ./shutsujin_departure.sh -s
@@ -566,6 +621,15 @@ language: en   # Japanese + English translation
 ./shutsujin_departure.sh --help
 ```
 
+**Directory Variables:**
+
+| Variable | Meaning | Example |
+|----------|---------|---------|
+| `SHOGUN_HOME` | Tool installation directory | `~/tools/multi-agent-shogun` |
+| `PROJECT_DIR` | Target project directory | `/home/user/my-app` |
+
+System files (queue/, config/, instructions/, etc.) live in `SHOGUN_HOME`, while actual coding work happens in `PROJECT_DIR`.
+
 </details>
 
 <details>
@@ -573,13 +637,14 @@ language: en   # Japanese + English translation
 
 **Normal Daily Usage:**
 ```bash
-./shutsujin_departure.sh          # Start everything
-tmux attach-session -t shogun     # Connect to give commands
+cd ~/my-project
+~/tools/multi-agent-shogun/shutsujin_departure.sh  # Start everything
+tmux attach-session -t shogun                       # Connect to give commands
 ```
 
 **Debug Mode (manual control):**
 ```bash
-./shutsujin_departure.sh -s       # Create sessions only
+~/tools/multi-agent-shogun/shutsujin_departure.sh -s  # Create sessions only
 
 # Manually start Claude Code on specific agents
 tmux send-keys -t shogun:0 'claude --dangerously-skip-permissions' Enter
@@ -593,7 +658,8 @@ tmux kill-session -t shogun
 tmux kill-session -t multiagent
 
 # Start fresh
-./shutsujin_departure.sh
+cd ~/my-project
+~/tools/multi-agent-shogun/shutsujin_departure.sh
 ```
 
 </details>

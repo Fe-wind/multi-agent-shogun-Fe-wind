@@ -7,15 +7,22 @@
 multi-agent-shogunは、Claude Code + tmux を使ったマルチエージェント並列開発基盤である。
 戦国時代の軍制をモチーフとした階層構造で、複数のプロジェクトを並行管理できる。
 
+## 環境変数
+
+- `$SHOGUN_HOME` - shogunシステムのディレクトリ（queue/, config/, instructions/ 等）
+- `$PROJECT_DIR` - 作業対象プロジェクトのディレクトリ
+
+`$SHOGUN_HOME == $PROJECT_DIR` のとき = 従来モード（後方互換）。
+
 ## コンパクション復帰時（全エージェント必須）
 
 コンパクション後は作業前に必ず以下を実行せよ：
 
 1. **自分のpane名を確認**: `tmux display-message -p '#W'`
 2. **対応する instructions を読む**:
-   - shogun → instructions/shogun.md
-   - karo (multiagent:0.0) → instructions/karo.md
-   - ashigaru (multiagent:0.1-8) → instructions/ashigaru.md
+   - shogun → `$SHOGUN_HOME/instructions/shogun.md`
+   - karo (multiagent:0.0) → `$SHOGUN_HOME/instructions/karo.md`
+   - ashigaru (multiagent:0.1-8) → `$SHOGUN_HOME/instructions/ashigaru.md`
 3. **禁止事項を確認してから作業開始**
 
 summaryの「次のステップ」を見てすぐ作業してはならぬ。まず自分が誰かを確認せよ。
@@ -55,14 +62,14 @@ summaryの「次のステップ」を見てすぐ作業してはならぬ。ま�
 - **上→下への指示**: YAML + send-keys で起こす
 - 理由: 殿（人間）の入力中に割り込みが発生するのを防ぐ
 
-### ファイル構成
+### ファイル構成（全て `$SHOGUN_HOME` 内）
 ```
-config/projects.yaml              # プロジェクト一覧
-status/master_status.yaml         # 全体進捗
-queue/shogun_to_karo.yaml         # Shogun → Karo 指示
-queue/tasks/ashigaru{N}.yaml      # Karo → Ashigaru 割当（各足軽専用）
-queue/reports/ashigaru{N}_report.yaml  # Ashigaru → Karo 報告
-dashboard.md                      # 人間用ダッシュボード
+$SHOGUN_HOME/config/projects.yaml              # プロジェクト一覧
+$SHOGUN_HOME/status/master_status.yaml         # 全体進捗
+$SHOGUN_HOME/queue/shogun_to_karo.yaml         # Shogun → Karo 指示
+$SHOGUN_HOME/queue/tasks/ashigaru{N}.yaml      # Karo → Ashigaru 割当（各足軽専用）
+$SHOGUN_HOME/queue/reports/ashigaru{N}_report.yaml  # Ashigaru → Karo 報告
+$SHOGUN_HOME/dashboard.md                      # 人間用ダッシュボード
 ```
 
 **注意**: 各足軽には専用のタスクファイル（queue/tasks/ashigaru1.yaml 等）がある。
@@ -102,9 +109,9 @@ language: ja  # ja, en, es, zh, ko, fr, de 等
 翻訳はユーザーの言語に合わせて自然な表現にする。
 
 ## 指示書
-- instructions/shogun.md - 将軍の指示書
-- instructions/karo.md - 家老の指示書
-- instructions/ashigaru.md - 足軽の指示書
+- `$SHOGUN_HOME/instructions/shogun.md` - 将軍の指示書
+- `$SHOGUN_HOME/instructions/karo.md` - 家老の指示書
+- `$SHOGUN_HOME/instructions/ashigaru.md` - 足軽の指示書
 
 ## Summary生成時の必須事項
 

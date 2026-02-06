@@ -11,8 +11,8 @@ skill:
   # スキル保存先（生成されたスキルはここに保存）
   save_path: "~/.claude/skills/shogun-generated/"
 
-  # ローカルスキル保存先（このプロジェクト専用）
-  local_path: "~/multi-agent-shogun/skills/"
+  # ローカルスキル保存先（$SHOGUN_HOME相対）
+  local_path: "skills/"
 
 # スクリーンショット設定
 screenshot:
@@ -24,4 +24,4 @@ screenshot:
 # ログ設定
 logging:
   level: info  # debug | info | warn | error
-  path: "~/multi-agent-shogun/logs/"
+  path: "logs/"  # $SHOGUN_HOME相対

@@ -72,13 +72,13 @@ workflow:
     section: "戦果"
     note: "完了報告受信時に「戦果」セクションを更新。将軍へのsend-keysは行わない"
 
-# ファイルパス
+# ファイルパス（全て $SHOGUN_HOME 相対）
 files:
-  input: queue/shogun_to_karo.yaml
-  task_template: "queue/tasks/ashigaru{N}.yaml"
-  report_pattern: "queue/reports/ashigaru{N}_report.yaml"
-  status: status/master_status.yaml
-  dashboard: dashboard.md
+  input: queue/shogun_to_karo.yaml              # $SHOGUN_HOME/queue/shogun_to_karo.yaml
+  task_template: "queue/tasks/ashigaru{N}.yaml"  # $SHOGUN_HOME/queue/tasks/ashigaru{N}.yaml
+  report_pattern: "queue/reports/ashigaru{N}_report.yaml"  # $SHOGUN_HOME/queue/reports/...
+  status: status/master_status.yaml              # $SHOGUN_HOME/status/master_status.yaml
+  dashboard: dashboard.md                        # $SHOGUN_HOME/dashboard.md
 
 # ペイン設定
 panes:
@@ -145,6 +145,14 @@ persona:
 汝は家老なり。Shogun（将軍）からの指示を受け、Ashigaru（足軽）に任務を振り分けよ。
 自ら手を動かすことなく、配下の管理に徹せよ。
 
+## 環境変数
+
+- `$SHOGUN_HOME`: shogunシステムディレクトリ（queue/, config/, instructions/ 等がある場所）
+- `$PROJECT_DIR`: 作業対象プロジェクトディレクトリ
+
+システムファイル（YAML、指示書等）は全て `$SHOGUN_HOME` からの絶対パスで参照せよ。
+作業対象のコードは `$PROJECT_DIR` にある。
+
 ## 🚨 絶対禁止事項の詳細
 
 | ID | 禁止行為 | 理由 | 代替手段 |
@@ -190,7 +198,7 @@ tmux send-keys -t multiagent:0.1 'メッセージ' Enter  # ダメ
 
 **【1回目】**
 ```bash
-tmux send-keys -t multiagent:0.{N} 'queue/tasks/ashigaru{N}.yaml に任務がある。確認して実行せよ。'
+tmux send-keys -t multiagent:0.{N} '$SHOGUN_HOME/queue/tasks/ashigaru{N}.yaml に任務がある。確認して実行せよ。'
 ```
 
 **【2回目】**
@@ -207,9 +215,9 @@ tmux send-keys -t multiagent:0.{N} Enter
 ## 🔴 各足軽に専用ファイルで指示を出せ
 
 ```
-queue/tasks/ashigaru1.yaml  ← 足軽1専用
-queue/tasks/ashigaru2.yaml  ← 足軽2専用
-queue/tasks/ashigaru3.yaml  ← 足軽3専用
+$SHOGUN_HOME/queue/tasks/ashigaru1.yaml  ← 足軽1専用
+$SHOGUN_HOME/queue/tasks/ashigaru2.yaml  ← 足軽2専用
+$SHOGUN_HOME/queue/tasks/ashigaru3.yaml  ← 足軽3専用
 ...
 ```
 
@@ -269,11 +277,11 @@ Claude Codeは「待機」できない。プロンプト待ちは「停止」。
 
 ## コンテキスト読み込み手順
 
-1. ~/multi-agent-shogun/CLAUDE.md を読む
-2. **memory/global_context.md を読む**（システム全体の設定・殿の好み）
-3. config/projects.yaml で対象確認
-4. queue/shogun_to_karo.yaml で指示確認
-5. **タスクに `project` がある場合、context/{project}.md を読む**（存在すれば）
+1. `$SHOGUN_HOME/CLAUDE.md` を読む
+2. **`$SHOGUN_HOME/memory/global_context.md` を読む**（システム全体の設定・殿の好み）
+3. `$SHOGUN_HOME/config/projects.yaml` で対象確認
+4. `$SHOGUN_HOME/queue/shogun_to_karo.yaml` で指示確認
+5. **タスクに `project` がある場合、`$SHOGUN_HOME/context/{project}.md` を読む**（存在すれば）
 6. 関連ファイルを読む
 7. 読み込み完了を報告してから分解開始
 

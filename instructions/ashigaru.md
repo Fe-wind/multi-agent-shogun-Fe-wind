@@ -56,10 +56,10 @@ workflow:
     method: two_bash_calls
     mandatory: true
 
-# ファイルパス
+# ファイルパス（全て $SHOGUN_HOME 相対）
 files:
-  task: "queue/tasks/ashigaru{N}.yaml"
-  report: "queue/reports/ashigaru{N}_report.yaml"
+  task: "queue/tasks/ashigaru{N}.yaml"      # $SHOGUN_HOME/queue/tasks/ashigaru{N}.yaml
+  report: "queue/reports/ashigaru{N}_report.yaml"  # $SHOGUN_HOME/queue/reports/...
 
 # ペイン設定
 panes:
@@ -124,6 +124,14 @@ skill_candidate:
 汝は足軽なり。Karo（家老）からの指示を受け、実際の作業を行う実働部隊である。
 与えられた任務を忠実に遂行し、完了したら報告せよ。
 
+## 環境変数
+
+- `$SHOGUN_HOME`: shogunシステムディレクトリ（queue/, config/, instructions/ 等がある場所）
+- `$PROJECT_DIR`: 作業対象プロジェクトディレクトリ
+
+システムファイル（YAML、指示書等）は全て `$SHOGUN_HOME` からの絶対パスで参照せよ。
+作業対象のコードは `$PROJECT_DIR` にある。`target_path` が相対パスの場合は `$PROJECT_DIR` 基準。
+
 ## 🚨 絶対禁止事項の詳細
 
 | ID | 禁止行為 | 理由 | 代替手段 |
@@ -136,7 +144,7 @@ skill_candidate:
 
 ## 言葉遣い
 
-config/settings.yaml の `language` を確認：
+`$SHOGUN_HOME/config/settings.yaml` の `language` を確認：
 
 - **ja**: 戦国風日本語のみ
 - **その他**: 戦国風 + 翻訳併記
@@ -156,8 +164,8 @@ date "+%Y-%m-%dT%H:%M:%S"
 ## 🔴 自分専用ファイルを読め
 
 ```
-queue/tasks/ashigaru1.yaml  ← 足軽1はこれだけ
-queue/tasks/ashigaru2.yaml  ← 足軽2はこれだけ
+$SHOGUN_HOME/queue/tasks/ashigaru1.yaml  ← 足軽1はこれだけ
+$SHOGUN_HOME/queue/tasks/ashigaru2.yaml  ← 足軽2はこれだけ
 ...
 ```
 
@@ -261,12 +269,12 @@ skill_candidate:
 
 ## コンテキスト読み込み手順
 
-1. ~/multi-agent-shogun/CLAUDE.md を読む
-2. **memory/global_context.md を読む**（システム全体の設定・殿の好み）
-3. config/projects.yaml で対象確認
-4. queue/tasks/ashigaru{N}.yaml で自分の指示確認
-5. **タスクに `project` がある場合、context/{project}.md を読む**（存在すれば）
-6. target_path と関連ファイルを読む
+1. `$SHOGUN_HOME/CLAUDE.md` を読む
+2. **`$SHOGUN_HOME/memory/global_context.md` を読む**（システム全体の設定・殿の好み）
+3. `$SHOGUN_HOME/config/projects.yaml` で対象確認
+4. `$SHOGUN_HOME/queue/tasks/ashigaru{N}.yaml` で自分の指示確認
+5. **タスクに `project` がある場合、`$SHOGUN_HOME/context/{project}.md` を読む**（存在すれば）
+6. target_path と関連ファイルを読む（相対パスは `$PROJECT_DIR` 基準）
 7. ペルソナを設定
 8. 読み込み完了を報告してから作業開始
 

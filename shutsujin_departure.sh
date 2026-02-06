@@ -9,14 +9,16 @@
 
 set -e
 
-# スクリプトのディレクトリを取得
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+# ディレクトリ変数の初期化
+# SHOGUN_HOME: ツール本体の場所（スクリプト自身のディレクトリ）
+# PROJECT_DIR: 作業対象プロジェクト（デフォルトは起動した場所）
+SHOGUN_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(pwd)"
 
 # 言語設定を読み取り（デフォルト: ja）
 LANG_SETTING="ja"
-if [ -f "./config/settings.yaml" ]; then
-    LANG_SETTING=$(grep "^language:" ./config/settings.yaml 2>/dev/null | awk '{print $2}' || echo "ja")
+if [ -f "$SHOGUN_HOME/config/settings.yaml" ]; then
+    LANG_SETTING=$(grep "^language:" "$SHOGUN_HOME/config/settings.yaml" 2>/dev/null | awk '{print $2}' || echo "ja")
 fi
 
 # 色付きログ関数（戦国風）
@@ -48,24 +50,33 @@ while [[ $# -gt 0 ]]; do
             OPEN_TERMINAL=true
             shift
             ;;
+        -p|--project)
+            PROJECT_DIR="$(cd "$2" 2>/dev/null && pwd)" || { echo "エラー: ディレクトリ '$2' が見つかりません"; exit 1; }
+            shift 2
+            ;;
         -h|--help)
             echo ""
-            echo "🏯 multi-agent-shogun 出陣スクリプト"
+            echo "🏯 multi-agent-shogun 出陣スクリプト（ランチャー）"
             echo ""
-            echo "使用方法: ./shutsujin_departure.sh [オプション]"
+            echo "使用方法: shutsujin_departure.sh [オプション]"
             echo ""
             echo "オプション:"
-            echo "  -s, --setup-only  tmuxセッションのセットアップのみ（Claude起動なし）"
-            echo "  -t, --terminal    Windows Terminal で新しいタブを開く"
-            echo "  -h, --help        このヘルプを表示"
+            echo "  -s, --setup-only   tmuxセッションのセットアップのみ（Claude起動なし）"
+            echo "  -t, --terminal     Windows Terminal で新しいタブを開く"
+            echo "  -p, --project DIR  作業対象プロジェクトディレクトリを指定（デフォルト: カレントディレクトリ）"
+            echo "  -h, --help         このヘルプを表示"
             echo ""
             echo "例:"
-            echo "  ./shutsujin_departure.sh      # 全エージェント起動（通常の出陣）"
+            echo "  cd /home/user/my-app && ~/tools/multi-agent-shogun/shutsujin_departure.sh"
+            echo "  ~/tools/multi-agent-shogun/shutsujin_departure.sh -p /home/user/my-app"
             echo "  ./shutsujin_departure.sh -s   # セットアップのみ（手動でClaude起動）"
             echo "  ./shutsujin_departure.sh -t   # 全エージェント起動 + ターミナルタブ展開"
             echo ""
+            echo "ディレクトリ:"
+            echo "  SHOGUN_HOME  ツール本体の場所（スクリプトのディレクトリ）"
+            echo "  PROJECT_DIR  作業対象プロジェクト（-p で指定、またはカレントディレクトリ）"
+            echo ""
             echo "エイリアス:"
-            echo "  csst  → cd /mnt/c/tools/multi-agent-shogun && ./shutsujin_departure.sh"
             echo "  css   → tmux attach-session -t shogun"
             echo "  csm   → tmux attach-session -t multiagent"
             echo ""
@@ -133,6 +144,9 @@ ASHIGARU_EOF
     echo -e "\033[1;33m  ┃\033[0m  \033[1;37m🏯 multi-agent-shogun\033[0m  〜 \033[1;36m戦国マルチエージェント統率システム\033[0m 〜           \033[1;33m┃\033[0m"
     echo -e "\033[1;33m  ┃\033[0m                                                                           \033[1;33m┃\033[0m"
     echo -e "\033[1;33m  ┃\033[0m    \033[1;35m将軍\033[0m: プロジェクト統括    \033[1;31m家老\033[0m: タスク管理    \033[1;34m足軽\033[0m: 実働部隊×8      \033[1;33m┃\033[0m"
+    echo -e "\033[1;33m  ┃\033[0m                                                                           \033[1;33m┃\033[0m"
+    echo -e "\033[1;33m  ┃\033[0m     📁 SHOGUN_HOME: \033[1;36m$SHOGUN_HOME\033[0m"
+    echo -e "\033[1;33m  ┃\033[0m     📁 PROJECT_DIR: \033[1;36m$PROJECT_DIR\033[0m"
     echo -e "\033[1;33m  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\033[0m"
     echo ""
 }
@@ -155,7 +169,7 @@ tmux kill-session -t shogun 2>/dev/null && log_info "  └─ shogun本陣、撤
 # ═══════════════════════════════════════════════════════════════════════════════
 log_info "📜 前回の軍議記録を破棄中..."
 for i in {1..8}; do
-    cat > ./queue/reports/ashigaru${i}_report.yaml << EOF
+    cat > "$SHOGUN_HOME/queue/reports/ashigaru${i}_report.yaml" << EOF
 worker_id: ashigaru${i}
 task_id: null
 timestamp: ""
@@ -165,11 +179,11 @@ EOF
 done
 
 # キューファイルリセット
-cat > ./queue/shogun_to_karo.yaml << 'EOF'
+cat > "$SHOGUN_HOME/queue/shogun_to_karo.yaml" << 'EOF'
 queue: []
 EOF
 
-cat > ./queue/karo_to_ashigaru.yaml << 'EOF'
+cat > "$SHOGUN_HOME/queue/karo_to_ashigaru.yaml" << 'EOF'
 assignments:
   ashigaru1:
     task_id: null
@@ -223,7 +237,7 @@ TIMESTAMP=$(date "+%Y-%m-%d %H:%M")
 
 if [ "$LANG_SETTING" = "ja" ]; then
     # 日本語のみ
-    cat > ./dashboard.md << EOF
+    cat > "$SHOGUN_HOME/dashboard.md" << EOF
 # 📊 戦況報告
 最終更新: ${TIMESTAMP}
 
@@ -251,7 +265,7 @@ if [ "$LANG_SETTING" = "ja" ]; then
 EOF
 else
     # 日本語 + 翻訳併記
-    cat > ./dashboard.md << EOF
+    cat > "$SHOGUN_HOME/dashboard.md" << EOF
 # 📊 戦況報告 (Battle Status Report)
 最終更新 (Last Updated): ${TIMESTAMP}
 
@@ -314,7 +328,7 @@ PANE_COLORS=("1;31" "1;34" "1;34" "1;34" "1;34" "1;34" "1;34" "1;34" "1;34")  # 
 
 for i in {0..8}; do
     tmux select-pane -t "multiagent:0.$i" -T "${PANE_TITLES[$i]}"
-    tmux send-keys -t "multiagent:0.$i" "cd $(pwd) && export PS1='(\[\033[${PANE_COLORS[$i]}m\]${PANE_TITLES[$i]}\[\033[0m\]) \[\033[1;32m\]\w\[\033[0m\]\$ ' && clear" Enter
+    tmux send-keys -t "multiagent:0.$i" "cd $PROJECT_DIR && export SHOGUN_HOME=$SHOGUN_HOME && export PROJECT_DIR=$PROJECT_DIR && export PS1='(\[\033[${PANE_COLORS[$i]}m\]${PANE_TITLES[$i]}\[\033[0m\]) \[\033[1;32m\]\w\[\033[0m\]\$ ' && clear" Enter
 done
 
 log_success "  └─ 家老・足軽の陣、構築完了"
@@ -325,7 +339,7 @@ echo ""
 # ═══════════════════════════════════════════════════════════════════════════════
 log_war "👑 将軍の本陣を構築中..."
 tmux new-session -d -s shogun
-tmux send-keys -t shogun "cd $(pwd) && export PS1='(\[\033[1;35m\]将軍\[\033[0m\]) \[\033[1;32m\]\w\[\033[0m\]\$ ' && clear" Enter
+tmux send-keys -t shogun "cd $PROJECT_DIR && export SHOGUN_HOME=$SHOGUN_HOME && export PROJECT_DIR=$PROJECT_DIR && export PS1='(\[\033[1;35m\]将軍\[\033[0m\]) \[\033[1;32m\]\w\[\033[0m\]\$ ' && clear" Enter
 tmux select-pane -t shogun:0.0 -P 'bg=#002b36'  # 将軍の Solarized Dark
 
 log_success "  └─ 将軍の本陣、構築完了"
@@ -337,8 +351,11 @@ echo ""
 if [ "$SETUP_ONLY" = false ]; then
     log_war "👑 全軍に Claude Code を召喚中..."
 
+    # エージェントに注入するパス情報プロンプト
+    SHOGUN_PROMPT="SHOGUN_HOME=$SHOGUN_HOME にshogunシステムファイル(queue/,config/,instructions/,dashboard.md,status/)がある。PROJECT_DIR=$PROJECT_DIR が作業対象プロジェクト。システムファイルは全て\$SHOGUN_HOMEからの絶対パスで参照せよ。"
+
     # 将軍
-    tmux send-keys -t shogun "MAX_THINKING_TOKENS=0 claude --model opus --dangerously-skip-permissions"
+    tmux send-keys -t shogun "MAX_THINKING_TOKENS=0 claude --model opus --dangerously-skip-permissions --append-system-prompt '$SHOGUN_PROMPT'"
     tmux send-keys -t shogun Enter
     log_info "  └─ 将軍、召喚完了"
 
@@ -347,7 +364,7 @@ if [ "$SETUP_ONLY" = false ]; then
 
     # 家老 + 足軽（9ペイン）
     for i in {0..8}; do
-        tmux send-keys -t "multiagent:0.$i" "claude --dangerously-skip-permissions"
+        tmux send-keys -t "multiagent:0.$i" "claude --dangerously-skip-permissions --append-system-prompt '$SHOGUN_PROMPT'"
         tmux send-keys -t "multiagent:0.$i" Enter
     done
     log_info "  └─ 家老・足軽、召喚完了"
@@ -431,14 +448,14 @@ NINJA_EOF
 
     # 将軍に指示書を読み込ませる
     log_info "  └─ 将軍に指示書を伝達中..."
-    tmux send-keys -t shogun "instructions/shogun.md を読んで役割を理解せよ。"
+    tmux send-keys -t shogun "$SHOGUN_HOME/instructions/shogun.md を読んで役割を理解せよ。"
     sleep 0.5
     tmux send-keys -t shogun Enter
 
     # 家老に指示書を読み込ませる
     sleep 2
     log_info "  └─ 家老に指示書を伝達中..."
-    tmux send-keys -t "multiagent:0.0" "instructions/karo.md を読んで役割を理解せよ。"
+    tmux send-keys -t "multiagent:0.0" "$SHOGUN_HOME/instructions/karo.md を読んで役割を理解せよ。"
     sleep 0.5
     tmux send-keys -t "multiagent:0.0" Enter
 
@@ -446,7 +463,7 @@ NINJA_EOF
     sleep 2
     log_info "  └─ 足軽に指示書を伝達中..."
     for i in {1..8}; do
-        tmux send-keys -t "multiagent:0.$i" "instructions/ashigaru.md を読んで役割を理解せよ。汝は足軽${i}号である。"
+        tmux send-keys -t "multiagent:0.$i" "$SHOGUN_HOME/instructions/ashigaru.md を読んで役割を理解せよ。汝は足軽${i}号である。"
         sleep 0.3
         tmux send-keys -t "multiagent:0.$i" Enter
         sleep 0.5
