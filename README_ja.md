@@ -237,9 +237,13 @@ multi-agent-shogun はツール本体を固定の場所に置いたまま、**�
 |------|------|---------|
 | `SHOGUN_HOME` | ツール本体の場所 | スクリプト自身のディレクトリから自動解決 |
 | `PROJECT_DIR` | 作業対象プロジェクト | カレントディレクトリ、または `-p` で指定 |
+| `PROJECT_ID` | 解決済みプロジェクトID | `config/projects.yaml` の path 一致、なければ `basename(PROJECT_DIR)` |
+| `DASHBOARD_PATH` | 現在のダッシュボード | `$SHOGUN_HOME/dashboards/{project_id}/dashboard.md` |
 
 - 全tmuxペインの作業ディレクトリが `PROJECT_DIR` に設定される
 - queue/, config/ 等のシステムファイルは `SHOGUN_HOME` 内を参照
+- ダッシュボードはプロジェクト単位で `dashboards/{project_id}/dashboard.md` に生成される
+- `SHOGUN_HOME/dashboard.md` は後方互換のため、現在アクティブなプロジェクトのエイリアスとして維持される
 - `SHOGUN_HOME == PROJECT_DIR` のときは従来モード（後方互換）
 
 ### 起動方法
@@ -247,24 +251,26 @@ multi-agent-shogun はツール本体を固定の場所に置いたまま、**�
 ```bash
 # 方法1: プロジェクトディレクトリに移動してから起動
 cd ~/my-app
-~/tools/multi-agent-shogun/shutsujin_departure.sh
+~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
 
 # 方法2: -p オプションで指定（どこからでも）
-~/tools/multi-agent-shogun/shutsujin_departure.sh -p ~/my-app
+~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -p ~/my-app
 
 # エイリアスを設定すると便利（~/.bashrc に追加）
-alias shogun='~/tools/multi-agent-shogun/shutsujin_departure.sh'
+alias shogun='~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh'
 # → cd ~/my-app && shogun で起動可能
 ```
 
 ### 起動後の状態
 
 ```
-SHOGUN_HOME (~/tools/multi-agent-shogun/)     PROJECT_DIR (~/my-app/)
+SHOGUN_HOME (~/tools/multi-agent-shogun-Fe-wind/)     PROJECT_DIR (~/my-app/)
 ├── queue/          ← システム通信          ├── src/          ← 足軽がここで作業
 ├── config/         ← 設定                ├── package.json
 ├── instructions/   ← 指示書              └── ...
-├── dashboard.md    ← 進捗報告
+├── dashboards/
+│   └── my-app/dashboard.md  ← プロジェクト別ダッシュボード
+├── dashboard.md    ← 現在アクティブなプロジェクトへの互換エイリアス
 └── ...
 ```
 
@@ -299,7 +305,13 @@ JavaScriptフレームワーク上位5つを調査して比較表を作成せよ
 
 ### Step 3: 進捗を確認
 
-エディタで `dashboard.md` を開いてリアルタイム状況を確認：
+エディタでプロジェクト別ダッシュボードを開いてリアルタイム状況を確認：
+
+```bash
+cat "$SHOGUN_HOME/dashboards/$PROJECT_ID/dashboard.md"
+# 従来互換パス（アクティブなプロジェクトを指す）
+cat "$SHOGUN_HOME/dashboard.md"
+```
 
 ```markdown
 ## 進行中
@@ -333,7 +345,11 @@ JavaScriptフレームワーク上位5つを調査して比較表を作成せよ
                                     ↓
                     ワーカー: バックグラウンドで実行
                                     ↓
-                    ダッシュボード: 結果を表示
+                    家老: ダッシュボード更新
+                                    ↓
+                    家老: 完了時に将軍へ連携通知
+                                    ↓
+                    ダッシュボード表示 / 将軍が状況連携
 ```
 
 長いタスクの完了を待つ必要はありません。
@@ -609,10 +625,10 @@ language: en   # 日本語 + 英訳併記
 
 ```bash
 # デフォルト: カレントディレクトリを対象プロジェクトとしてフル起動
-cd ~/my-project && ~/tools/multi-agent-shogun/shutsujin_departure.sh
+cd ~/my-project && ~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
 
 # -p でプロジェクトディレクトリを指定
-~/tools/multi-agent-shogun/shutsujin_departure.sh -p ~/my-project
+~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -p ~/my-project
 
 # セッションセットアップのみ（Claude Code起動なし）
 ./shutsujin_departure.sh -s
@@ -631,8 +647,10 @@ cd ~/my-project && ~/tools/multi-agent-shogun/shutsujin_departure.sh
 
 | 変数 | 意味 | 例 |
 |------|------|-----|
-| `SHOGUN_HOME` | ツール本体の場所 | `~/tools/multi-agent-shogun` |
+| `SHOGUN_HOME` | ツール本体の場所 | `~/tools/multi-agent-shogun-Fe-wind` |
 | `PROJECT_DIR` | 作業対象プロジェクト | `/home/user/my-app` |
+| `PROJECT_ID` | 解決済みプロジェクトID | `my-app` |
+| `DASHBOARD_PATH` | 現在のダッシュボードパス | `~/tools/multi-agent-shogun-Fe-wind/dashboards/my-app/dashboard.md` |
 
 `SHOGUN_HOME` 内にはシステムファイル（queue/, config/, instructions/ 等）が配置され、`PROJECT_DIR` 内で実際のコーディング作業を行います。
 
@@ -644,13 +662,13 @@ cd ~/my-project && ~/tools/multi-agent-shogun/shutsujin_departure.sh
 **通常の毎日の使用：**
 ```bash
 cd ~/my-project
-~/tools/multi-agent-shogun/shutsujin_departure.sh  # 全て起動
+~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh  # 全て起動
 tmux attach-session -t shogun                       # 接続してコマンドを出す
 ```
 
 **デバッグモード（手動制御）：**
 ```bash
-~/tools/multi-agent-shogun/shutsujin_departure.sh -s  # セッションのみ作成
+~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -s  # セッションのみ作成
 
 # 特定のエージェントでClaude Codeを手動起動
 tmux send-keys -t shogun:0 'claude --dangerously-skip-permissions' Enter
@@ -665,7 +683,7 @@ tmux kill-session -t multiagent
 
 # 新しく起動
 cd ~/my-project
-~/tools/multi-agent-shogun/shutsujin_departure.sh
+~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
 ```
 
 </details>
@@ -717,11 +735,15 @@ multi-agent-shogun/
 │
 ├── queue/                    # 通信ファイル
 │   ├── shogun_to_karo.yaml   # 将軍から家老へのコマンド
+│   ├── karo_to_shogun.yaml   # 家老から将軍への完了連携通知
 │   ├── tasks/                # 各ワーカーのタスクファイル
 │   └── reports/              # ワーカーレポート
 │
 ├── memory/                   # Memory MCP保存場所
-├── dashboard.md              # リアルタイム状況一覧
+├── dashboards/               # プロジェクト別ダッシュボード
+│   └── {project_id}/
+│       └── dashboard.md
+├── dashboard.md              # 現在アクティブなダッシュボードへの互換エイリアス
 └── CLAUDE.md                 # Claude用プロジェクトコンテキスト
 ```
 
@@ -769,14 +791,42 @@ tmux attach-session -t multiagent
 
 </details>
 
+<details>
+<summary><b>tmuxで「sessions should be nested with care」が出る？</b></summary>
+
+原因:
+1. `tmux attach-session -t shoguntmux attach-session -t shogun` のようなコマンド連結ミス
+2. 既に tmux 内にいる状態で `attach-session` を実行した
+
+tmux内での正しい切り替え:
+```bash
+tmux ls
+tmux switch-client -t shogun
+tmux switch-client -t multiagent
+```
+
+通常シェル（tmux外）から接続する場合:
+```bash
+tmux attach-session -t shogun
+```
+
+tmux内から強制アタッチ（非推奨）:
+```bash
+TMUX= tmux attach-session -t shogun
+```
+
+</details>
+
 ---
 
 ## 📚 tmux クイックリファレンス
 
 | コマンド | 説明 |
 |----------|------|
-| `tmux attach -t shogun` | 将軍に接続 |
-| `tmux attach -t multiagent` | ワーカーに接続 |
+| `tmux attach-session -t shogun` | 将軍に接続（tmux外） |
+| `tmux attach-session -t multiagent` | ワーカーに接続（tmux外） |
+| `tmux switch-client -t shogun` | 将軍に切り替え（tmux内） |
+| `tmux switch-client -t multiagent` | ワーカーに切り替え（tmux内） |
 | `Ctrl+B` の後 `0-8` | ペイン間を切り替え |
 | `Ctrl+B` の後 `d` | デタッチ（実行継続） |
 | `tmux kill-session -t shogun` | 将軍セッションを停止 |

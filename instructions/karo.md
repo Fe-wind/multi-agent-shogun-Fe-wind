@@ -70,15 +70,25 @@ workflow:
     action: update_dashboard
     target: dashboard.md
     section: "戦果"
-    note: "完了報告受信時に「戦果」セクションを更新。将軍へのsend-keysは行わない"
+    note: "完了報告受信時に「戦果」セクションを更新"
+  - step: 11
+    action: write_yaml
+    target: queue/karo_to_shogun.yaml
+    note: "同一 parent_cmd の全タスク完了後、完了連携情報を追記"
+  - step: 12
+    action: send_keys
+    target: shogun
+    method: two_bash_calls
+    condition: "dashboard更新済み かつ 同一parent_cmdの全タスクが done/failed/blocked"
 
 # ファイルパス（全て $SHOGUN_HOME 相対）
 files:
   input: queue/shogun_to_karo.yaml              # $SHOGUN_HOME/queue/shogun_to_karo.yaml
   task_template: "queue/tasks/ashigaru{N}.yaml"  # $SHOGUN_HOME/queue/tasks/ashigaru{N}.yaml
   report_pattern: "queue/reports/ashigaru{N}_report.yaml"  # $SHOGUN_HOME/queue/reports/...
+  notify_queue: queue/karo_to_shogun.yaml       # $SHOGUN_HOME/queue/karo_to_shogun.yaml
   status: status/master_status.yaml              # $SHOGUN_HOME/status/master_status.yaml
-  dashboard: dashboard.md                        # $SHOGUN_HOME/dashboard.md
+  dashboard: dashboard.md                        # 互換エイリアス（実体は $DASHBOARD_PATH）
 
 # ペイン設定
 panes:
@@ -98,8 +108,9 @@ panes:
 send_keys:
   method: two_bash_calls
   to_ashigaru_allowed: true
-  to_shogun_allowed: false  # dashboard.md更新で報告
-  reason_shogun_disabled: "殿の入力中に割り込み防止"
+  to_shogun_allowed: conditional  # 完了連携時のみ許可
+  shogun_notify_condition: "dashboard更新後かつ全タスク完了時のみ"
+  reason_shogun_limited: "不要な割り込み防止。完了連携のみ許可。"
 
 # 足軽の状態確認ルール
 ashigaru_status_check:
@@ -149,8 +160,10 @@ persona:
 
 - `$SHOGUN_HOME`: shogunシステムディレクトリ（queue/, config/, instructions/ 等がある場所）
 - `$PROJECT_DIR`: 作業対象プロジェクトディレクトリ
+- `$DASHBOARD_PATH`: 現在のプロジェクトダッシュボード実体
 
 システムファイル（YAML、指示書等）は全て `$SHOGUN_HOME` からの絶対パスで参照せよ。
+dashboard 更新は **必ず `$DASHBOARD_PATH`** を優先して使え。
 作業対象のコードは `$PROJECT_DIR` にある。
 
 ## 🚨 絶対禁止事項の詳細
@@ -206,11 +219,44 @@ tmux send-keys -t multiagent:0.{N} '$SHOGUN_HOME/queue/tasks/ashigaru{N}.yaml �
 tmux send-keys -t multiagent:0.{N} Enter
 ```
 
-### ⚠️ 将軍への send-keys は禁止
+### ⚠️ 将軍への send-keys は原則禁止
 
-- 将軍への send-keys は **行わない**
-- 代わりに **dashboard.md を更新** して報告
-- 理由: 殿の入力中に割り込み防止
+原則として将軍への send-keys は禁止。ただし **完了連携時のみ例外的に許可** する。
+
+- 例外条件:
+  - 同一 `parent_cmd` に紐づく全タスクが `done/failed/blocked` のいずれか
+  - **dashboard.md（実体: `$DASHBOARD_PATH`）の更新が完了済み**
+- 通常の進捗報告は従来どおり dashboard 更新のみ
+- 理由: 無駄な割り込みを避けつつ、完了を将軍へ即時連携するため
+
+#### 完了連携の手順（必須）
+
+1. 全報告ファイルをスキャンし、対象 `parent_cmd` の完了判定を行う
+2. 先に dashboard を更新する
+3. `$SHOGUN_HOME/queue/karo_to_shogun.yaml` に完了連携を追記する
+4. 将軍へ 2ステップ send-keys で通知する
+
+`queue/karo_to_shogun.yaml` の例:
+
+```yaml
+notifications:
+  - id: notify_001
+    parent_cmd: cmd_001
+    project: sample_project
+    dashboard_path: /abs/path/to/dashboard.md
+    completed_at: "2026-02-06T22:10:00"
+    summary: "全足軽の任務が完了。戦果へ反映済み。"
+```
+
+send-keys の例（2ステップ）:
+
+```bash
+# 1回目
+tmux send-keys -t shogun '$SHOGUN_HOME/queue/karo_to_shogun.yaml を確認せよ。cmd_001 の任務完了、dashboard更新済み。'
+
+# 2回目
+tmux send-keys -t shogun Enter
+```
 
 ## 🔴 各足軽に専用ファイルで指示を出せ
 
@@ -298,6 +344,7 @@ Claude Codeは「待機」できない。プロンプト待ちは「停止」。
 | タスク受領時 | 進行中 | 新規タスクを「進行中」に追加 |
 | 完了報告受信時 | 戦果 | 完了したタスクを「戦果」に移動 |
 | 要対応事項発生時 | 要対応 | 殿の判断が必要な事項を追加 |
+| 全タスク完了時 | 連携通知 | queue/karo_to_shogun.yaml 追記 + 将軍へ send-keys |
 
 ### なぜ家老だけが更新するのか
 
@@ -331,6 +378,7 @@ dashboard.md を更新する際は、**必ず以下を確認せよ**：
 - [ ] 殿の判断が必要な事項があるか？
 - [ ] あるなら「🚨 要対応」セクションに記載したか？
 - [ ] 詳細は別セクションでも、サマリは要対応に書いたか？
+- [ ] 全タスク完了なら queue/karo_to_shogun.yaml を更新し、将軍へ完了連携したか？
 
 ### 要対応に記載すべき事項
 

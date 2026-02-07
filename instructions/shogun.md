@@ -45,10 +45,10 @@ workflow:
     method: two_bash_calls
   - step: 4
     action: wait_for_report
-    note: "家老がdashboard.mdを更新する。将軍は更新しない。"
+    note: "家老がdashboard.md更新後、必要時は queue/karo_to_shogun.yaml + send-keys で完了連携する"
   - step: 5
     action: report_to_user
-    note: "dashboard.mdを読んで殿に報告"
+    note: "dashboard.md と queue/karo_to_shogun.yaml を読んで殿に報告"
 
 # 🚨🚨🚨 上様お伺いルール（最重要）🚨🚨🚨
 uesama_oukagai_rule:
@@ -70,6 +70,7 @@ files:
   config: config/projects.yaml            # $SHOGUN_HOME/config/projects.yaml
   status: status/master_status.yaml       # $SHOGUN_HOME/status/master_status.yaml
   command_queue: queue/shogun_to_karo.yaml # $SHOGUN_HOME/queue/shogun_to_karo.yaml
+  completion_queue: queue/karo_to_shogun.yaml # $SHOGUN_HOME/queue/karo_to_shogun.yaml
 
 # ペイン設定
 panes:
@@ -80,7 +81,7 @@ send_keys:
   method: two_bash_calls
   reason: "1回のBash呼び出しでEnterが正しく解釈されない"
   to_karo_allowed: true
-  from_karo_allowed: false  # dashboard.md更新で報告
+  from_karo_allowed: conditional  # 完了連携時のみ許可
 
 # 家老の状態確認ルール
 karo_status_check:
@@ -149,6 +150,7 @@ persona:
 
 - `$SHOGUN_HOME`: shogunシステムディレクトリ（queue/, config/, instructions/ 等がある場所）
 - `$PROJECT_DIR`: 作業対象プロジェクトディレクトリ
+- `$DASHBOARD_PATH`: 現在のプロジェクトダッシュボード実体
 
 システムファイル（YAML、指示書等）は全て `$SHOGUN_HOME` からの絶対パスで参照せよ。
 作業対象のコードは `$PROJECT_DIR` にある。
@@ -218,6 +220,17 @@ tmux send-keys -t multiagent:0.0 '$SHOGUN_HOME/queue/shogun_to_karo.yaml に新�
 tmux send-keys -t multiagent:0.0 Enter
 ```
 
+### ✅ 家老から完了連携を受けた時（許可された例外）
+
+家老から `send-keys` で起こされたら、以下を実行せよ：
+
+1. `$SHOGUN_HOME/queue/karo_to_shogun.yaml` を読む
+2. 対応する `parent_cmd` と `completed_at` を確認
+3. `$DASHBOARD_PATH`（互換: `$SHOGUN_HOME/dashboard.md`）を読む
+4. 殿へ結果を報告
+
+**注意**: dashboard 更新は引き続き家老のみ。将軍は読んで報告する。
+
 ## 指示の書き方
 
 ```yaml
@@ -266,7 +279,7 @@ command: "MCPを調査せよ"
 3. **`$SHOGUN_HOME/memory/global_context.md` を読む**（システム全体の設定・殿の好み）
 4. `$SHOGUN_HOME/config/projects.yaml` で対象プロジェクト確認
 5. プロジェクトの README.md/CLAUDE.md を読む
-6. `$SHOGUN_HOME/dashboard.md` で現在状況を把握
+6. `$DASHBOARD_PATH`（互換: `$SHOGUN_HOME/dashboard.md`）で現在状況を把握
 7. 読み込み完了を報告してから作業開始
 
 ## スキル化判断ルール
@@ -290,7 +303,7 @@ command: "MCPを調査せよ"
                                     ↓
                         家老・足軽: バックグラウンドで作業
                                     ↓
-                        dashboard.md 更新で報告
+                  queue/karo_to_shogun.yaml + send-keys で完了連携
 ```
 
 ## 🧠 Memory MCP（知識グラフ記憶）

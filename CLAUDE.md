@@ -11,6 +11,7 @@ multi-agent-shogunは、Claude Code + tmux を使ったマルチエージェン�
 
 - `$SHOGUN_HOME` - shogunシステムのディレクトリ（queue/, config/, instructions/ 等）
 - `$PROJECT_DIR` - 作業対象プロジェクトのディレクトリ
+- `$DASHBOARD_PATH` - 現在のプロジェクト用ダッシュボード（`$SHOGUN_HOME/dashboards/{project_id}/dashboard.md`）
 
 `$SHOGUN_HOME == $PROJECT_DIR` のとき = 従来モード（後方互換）。
 
@@ -58,18 +59,21 @@ summaryの「次のステップ」を見てすぐ作業してはならぬ。ま�
 - 通知は tmux send-keys で相手を起こす（必ず Enter を使用、C-m 禁止）
 
 ### 報告の流れ（割り込み防止設計）
-- **下→上への報告**: dashboard.md 更新のみ（send-keys 禁止）
+- **下→上への報告（原則）**: dashboard.md 更新のみ
+- **例外**: 家老は、dashboard更新後にタスク一式完了した時のみ将軍へ send-keys で完了連携可
 - **上→下への指示**: YAML + send-keys で起こす
-- 理由: 殿（人間）の入力中に割り込みが発生するのを防ぐ
+- 理由: 不要な割り込みを防ぎつつ、完了時は将軍へ即時連携するため
 
 ### ファイル構成（全て `$SHOGUN_HOME` 内）
 ```
 $SHOGUN_HOME/config/projects.yaml              # プロジェクト一覧
 $SHOGUN_HOME/status/master_status.yaml         # 全体進捗
 $SHOGUN_HOME/queue/shogun_to_karo.yaml         # Shogun → Karo 指示
+$SHOGUN_HOME/queue/karo_to_shogun.yaml         # Karo → Shogun 完了連携
 $SHOGUN_HOME/queue/tasks/ashigaru{N}.yaml      # Karo → Ashigaru 割当（各足軽専用）
 $SHOGUN_HOME/queue/reports/ashigaru{N}_report.yaml  # Ashigaru → Karo 報告
-$SHOGUN_HOME/dashboard.md                      # 人間用ダッシュボード
+$SHOGUN_HOME/dashboards/{project_id}/dashboard.md   # プロジェクト別ダッシュボード実体
+$SHOGUN_HOME/dashboard.md                      # 後方互換エイリアス（実体は $DASHBOARD_PATH）
 ```
 
 **注意**: 各足軽には専用のタスクファイル（queue/tasks/ashigaru1.yaml 等）がある。
@@ -155,6 +159,7 @@ MCPツールは遅延ロード方式。使用前に必ず `ToolSearch` で検索
 ### 3. 報告ファイルの確認
 - 足軽の報告は queue/reports/ashigaru{N}_report.yaml
 - 家老からの報告待ちの際はこれを確認
+- 家老の完了連携は queue/karo_to_shogun.yaml を確認
 
 ### 4. 家老の状態確認
 - 指示前に家老が処理中か確認: `tmux capture-pane -t multiagent:0.0 -p | tail -20`

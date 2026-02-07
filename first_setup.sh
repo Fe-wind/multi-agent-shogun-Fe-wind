@@ -357,6 +357,34 @@ EOF
 done
 log_info "足軽レポートファイル (1-8) を確認/作成しました"
 
+# 将軍↔家老キューファイル
+if [ ! -f "$SCRIPT_DIR/queue/shogun_to_karo.yaml" ]; then
+    cat > "$SCRIPT_DIR/queue/shogun_to_karo.yaml" << 'EOF'
+queue: []
+EOF
+fi
+
+if [ ! -f "$SCRIPT_DIR/queue/karo_to_shogun.yaml" ]; then
+    cat > "$SCRIPT_DIR/queue/karo_to_shogun.yaml" << 'EOF'
+notifications: []
+EOF
+fi
+
+if [ ! -f "$SCRIPT_DIR/queue/karo_to_ashigaru.yaml" ]; then
+    cat > "$SCRIPT_DIR/queue/karo_to_ashigaru.yaml" << 'EOF'
+assignments:
+  ashigaru1: { task_id: null, description: null, target_path: null, status: idle }
+  ashigaru2: { task_id: null, description: null, target_path: null, status: idle }
+  ashigaru3: { task_id: null, description: null, target_path: null, status: idle }
+  ashigaru4: { task_id: null, description: null, target_path: null, status: idle }
+  ashigaru5: { task_id: null, description: null, target_path: null, status: idle }
+  ashigaru6: { task_id: null, description: null, target_path: null, status: idle }
+  ashigaru7: { task_id: null, description: null, target_path: null, status: idle }
+  ashigaru8: { task_id: null, description: null, target_path: null, status: idle }
+EOF
+fi
+log_info "将軍・家老キューファイルを確認/作成しました"
+
 RESULTS+=("キューファイル: OK")
 
 # ============================================================

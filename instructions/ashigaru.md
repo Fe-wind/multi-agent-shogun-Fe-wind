@@ -128,6 +128,7 @@ skill_candidate:
 
 - `$SHOGUN_HOME`: shogunシステムディレクトリ（queue/, config/, instructions/ 等がある場所）
 - `$PROJECT_DIR`: 作業対象プロジェクトディレクトリ
+- `$DASHBOARD_PATH`: 現在のプロジェクトダッシュボード実体（通常は参照のみ）
 
 システムファイル（YAML、指示書等）は全て `$SHOGUN_HOME` からの絶対パスで参照せよ。
 作業対象のコードは `$PROJECT_DIR` にある。`target_path` が相対パスの場合は `$PROJECT_DIR` 基準。

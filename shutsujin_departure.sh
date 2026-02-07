@@ -14,12 +14,64 @@ set -e
 # PROJECT_DIR: 作業対象プロジェクト（デフォルトは起動した場所）
 SHOGUN_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(pwd)"
+DASHBOARDS_DIR=""
+PROJECT_ID=""
+PROJECT_DASHBOARD_DIR=""
+DASHBOARD_PATH=""
+LEGACY_DASHBOARD_PATH="$SHOGUN_HOME/dashboard.md"
 
 # 言語設定を読み取り（デフォルト: ja）
 LANG_SETTING="ja"
 if [ -f "$SHOGUN_HOME/config/settings.yaml" ]; then
     LANG_SETTING=$(grep "^language:" "$SHOGUN_HOME/config/settings.yaml" 2>/dev/null | awk '{print $2}' || echo "ja")
 fi
+
+resolve_project_id() {
+    local config_file="$SHOGUN_HOME/config/projects.yaml"
+    local resolved_id=""
+
+    if [ -f "$config_file" ]; then
+        resolved_id=$(awk -v target="$PROJECT_DIR" '
+            function clean(v) {
+                gsub(/^[ \t"\047]+|[ \t"\047]+$/, "", v)
+                return v
+            }
+
+            /^[[:space:]]*-[[:space:]]id:[[:space:]]*/ {
+                line = $0
+                sub(/^[[:space:]]*-[[:space:]]id:[[:space:]]*/, "", line)
+                current_id = clean(line)
+                next
+            }
+
+            /^[[:space:]]*id:[[:space:]]*/ {
+                line = $0
+                sub(/^[[:space:]]*id:[[:space:]]*/, "", line)
+                current_id = clean(line)
+                next
+            }
+
+            /^[[:space:]]*path:[[:space:]]*/ {
+                line = $0
+                sub(/^[[:space:]]*path:[[:space:]]*/, "", line)
+                path_value = clean(line)
+                if (path_value == target && current_id != "") {
+                    print current_id
+                    exit
+                }
+            }
+        ' "$config_file")
+    fi
+
+    if [ -z "$resolved_id" ]; then
+        resolved_id="$(basename "$PROJECT_DIR")"
+    fi
+
+    PROJECT_ID=$(echo "$resolved_id" | sed -E 's/[^A-Za-z0-9._-]+/-/g; s/^-+//; s/-+$//; s/-{2,}/-/g')
+    if [ -z "$PROJECT_ID" ]; then
+        PROJECT_ID="project"
+    fi
+}
 
 # 色付きログ関数（戦国風）
 log_info() {
@@ -67,8 +119,8 @@ while [[ $# -gt 0 ]]; do
             echo "  -h, --help         このヘルプを表示"
             echo ""
             echo "例:"
-            echo "  cd /home/user/my-app && ~/tools/multi-agent-shogun/shutsujin_departure.sh"
-            echo "  ~/tools/multi-agent-shogun/shutsujin_departure.sh -p /home/user/my-app"
+            echo "  cd /home/user/my-app && $SHOGUN_HOME/shutsujin_departure.sh"
+            echo "  $SHOGUN_HOME/shutsujin_departure.sh -p /home/user/my-app"
             echo "  ./shutsujin_departure.sh -s   # セットアップのみ（手動でClaude起動）"
             echo "  ./shutsujin_departure.sh -t   # 全エージェント起動 + ターミナルタブ展開"
             echo ""
@@ -89,6 +141,11 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+resolve_project_id
+DASHBOARDS_DIR="$SHOGUN_HOME/dashboards"
+PROJECT_DASHBOARD_DIR="$DASHBOARDS_DIR/$PROJECT_ID"
+DASHBOARD_PATH="$PROJECT_DASHBOARD_DIR/dashboard.md"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 出陣バナー表示（CC0ライセンスASCIIアート使用）
@@ -147,6 +204,7 @@ ASHIGARU_EOF
     echo -e "\033[1;33m  ┃\033[0m                                                                           \033[1;33m┃\033[0m"
     echo -e "\033[1;33m  ┃\033[0m     📁 SHOGUN_HOME: \033[1;36m$SHOGUN_HOME\033[0m"
     echo -e "\033[1;33m  ┃\033[0m     📁 PROJECT_DIR: \033[1;36m$PROJECT_DIR\033[0m"
+    echo -e "\033[1;33m  ┃\033[0m     🏷️ PROJECT_ID: \033[1;36m$PROJECT_ID\033[0m"
     echo -e "\033[1;33m  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\033[0m"
     echo ""
 }
@@ -181,6 +239,10 @@ done
 # キューファイルリセット
 cat > "$SHOGUN_HOME/queue/shogun_to_karo.yaml" << 'EOF'
 queue: []
+EOF
+
+cat > "$SHOGUN_HOME/queue/karo_to_shogun.yaml" << 'EOF'
+notifications: []
 EOF
 
 cat > "$SHOGUN_HOME/queue/karo_to_ashigaru.yaml" << 'EOF'
@@ -234,11 +296,14 @@ log_success "✅ 陣払い完了"
 # ═══════════════════════════════════════════════════════════════════════════════
 log_info "📊 戦況報告板を初期化中..."
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M")
+mkdir -p "$PROJECT_DASHBOARD_DIR"
 
 if [ "$LANG_SETTING" = "ja" ]; then
     # 日本語のみ
-    cat > "$SHOGUN_HOME/dashboard.md" << EOF
+    cat > "$DASHBOARD_PATH" << EOF
 # 📊 戦況報告
+対象プロジェクト: ${PROJECT_ID}
+プロジェクトパス: ${PROJECT_DIR}
 最終更新: ${TIMESTAMP}
 
 ## 🚨 要対応 - 殿のご判断をお待ちしております
@@ -265,8 +330,10 @@ if [ "$LANG_SETTING" = "ja" ]; then
 EOF
 else
     # 日本語 + 翻訳併記
-    cat > "$SHOGUN_HOME/dashboard.md" << EOF
+    cat > "$DASHBOARD_PATH" << EOF
 # 📊 戦況報告 (Battle Status Report)
+対象プロジェクト (Project): ${PROJECT_ID}
+プロジェクトパス (Path): ${PROJECT_DIR}
 最終更新 (Last Updated): ${TIMESTAMP}
 
 ## 🚨 要対応 - 殿のご判断をお待ちしております (Action Required - Awaiting Lord's Decision)
@@ -293,7 +360,14 @@ else
 EOF
 fi
 
-log_success "  └─ ダッシュボード初期化完了 (言語: $LANG_SETTING)"
+if ln -sfn "$DASHBOARD_PATH" "$LEGACY_DASHBOARD_PATH" 2>/dev/null; then
+    log_info "  └─ 互換エイリアス更新: $LEGACY_DASHBOARD_PATH -> $DASHBOARD_PATH"
+else
+    cp "$DASHBOARD_PATH" "$LEGACY_DASHBOARD_PATH"
+    log_info "  └─ 互換コピーを作成: $LEGACY_DASHBOARD_PATH (symlink未対応)"
+fi
+
+log_success "  └─ ダッシュボード初期化完了 (言語: $LANG_SETTING, project: $PROJECT_ID)"
 echo ""
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -328,7 +402,7 @@ PANE_COLORS=("1;31" "1;34" "1;34" "1;34" "1;34" "1;34" "1;34" "1;34" "1;34")  # 
 
 for i in {0..8}; do
     tmux select-pane -t "multiagent:0.$i" -T "${PANE_TITLES[$i]}"
-    tmux send-keys -t "multiagent:0.$i" "cd $PROJECT_DIR && export SHOGUN_HOME=$SHOGUN_HOME && export PROJECT_DIR=$PROJECT_DIR && export PS1='(\[\033[${PANE_COLORS[$i]}m\]${PANE_TITLES[$i]}\[\033[0m\]) \[\033[1;32m\]\w\[\033[0m\]\$ ' && clear" Enter
+    tmux send-keys -t "multiagent:0.$i" "cd \"$PROJECT_DIR\" && export SHOGUN_HOME=\"$SHOGUN_HOME\" && export PROJECT_DIR=\"$PROJECT_DIR\" && export PROJECT_ID=\"$PROJECT_ID\" && export DASHBOARD_PATH=\"$DASHBOARD_PATH\" && export PS1='(\[\033[${PANE_COLORS[$i]}m\]${PANE_TITLES[$i]}\[\033[0m\]) \[\033[1;32m\]\w\[\033[0m\]\$ ' && clear" Enter
 done
 
 log_success "  └─ 家老・足軽の陣、構築完了"
@@ -339,7 +413,7 @@ echo ""
 # ═══════════════════════════════════════════════════════════════════════════════
 log_war "👑 将軍の本陣を構築中..."
 tmux new-session -d -s shogun
-tmux send-keys -t shogun "cd $PROJECT_DIR && export SHOGUN_HOME=$SHOGUN_HOME && export PROJECT_DIR=$PROJECT_DIR && export PS1='(\[\033[1;35m\]将軍\[\033[0m\]) \[\033[1;32m\]\w\[\033[0m\]\$ ' && clear" Enter
+tmux send-keys -t shogun "cd \"$PROJECT_DIR\" && export SHOGUN_HOME=\"$SHOGUN_HOME\" && export PROJECT_DIR=\"$PROJECT_DIR\" && export PROJECT_ID=\"$PROJECT_ID\" && export DASHBOARD_PATH=\"$DASHBOARD_PATH\" && export PS1='(\[\033[1;35m\]将軍\[\033[0m\]) \[\033[1;32m\]\w\[\033[0m\]\$ ' && clear" Enter
 tmux select-pane -t shogun:0.0 -P 'bg=#002b36'  # 将軍の Solarized Dark
 
 log_success "  └─ 将軍の本陣、構築完了"
@@ -352,7 +426,7 @@ if [ "$SETUP_ONLY" = false ]; then
     log_war "👑 全軍に Claude Code を召喚中..."
 
     # エージェントに注入するパス情報プロンプト
-    SHOGUN_PROMPT="SHOGUN_HOME=$SHOGUN_HOME にshogunシステムファイル(queue/,config/,instructions/,dashboard.md,status/)がある。PROJECT_DIR=$PROJECT_DIR が作業対象プロジェクト。システムファイルは全て\$SHOGUN_HOMEからの絶対パスで参照せよ。"
+    SHOGUN_PROMPT="SHOGUN_HOME=$SHOGUN_HOME に shogun システムファイル(queue/,config/,instructions/,status/)がある。PROJECT_DIR=$PROJECT_DIR が作業対象プロジェクト。PROJECT_ID=$PROJECT_ID。ダッシュボード実体は DASHBOARD_PATH=$DASHBOARD_PATH。互換パスとして $LEGACY_DASHBOARD_PATH も存在するが、更新時は必ず \$DASHBOARD_PATH を使え。"
 
     # 将軍
     tmux send-keys -t shogun "MAX_THINKING_TOKENS=0 claude --model opus --dangerously-skip-permissions --append-system-prompt '$SHOGUN_PROMPT'"
@@ -535,6 +609,9 @@ echo "  │     tmux attach-session -t shogun   (または: css)        │"
 echo "  │                                                          │"
 echo "  │  家老・足軽の陣を確認する:                                │"
 echo "  │     tmux attach-session -t multiagent   (または: csm)    │"
+echo "  │                                                          │"
+echo "  │  tmux内から切替える場合:                                  │"
+echo "  │     tmux switch-client -t shogun / multiagent           │"
 echo "  │                                                          │"
 echo "  │  ※ 各エージェントは指示書を読み込み済み。                 │"
 echo "  │    すぐに命令を開始できます。                             │"

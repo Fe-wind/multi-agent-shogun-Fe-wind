@@ -237,9 +237,13 @@ multi-agent-shogun can be installed in a fixed location and **launched from any 
 |----------|---------|----------|
 | `SHOGUN_HOME` | Tool installation directory | Resolved from script location |
 | `PROJECT_DIR` | Target project directory | Current directory, or specified with `-p` |
+| `PROJECT_ID` | Resolved project identifier | From `config/projects.yaml` path match, else `basename(PROJECT_DIR)` |
+| `DASHBOARD_PATH` | Active dashboard file | `$SHOGUN_HOME/dashboards/{project_id}/dashboard.md` |
 
 - All tmux panes' working directory is set to `PROJECT_DIR`
 - System files (queue/, config/, etc.) are referenced from `SHOGUN_HOME`
+- Dashboard is initialized per project at `dashboards/{project_id}/dashboard.md`
+- `SHOGUN_HOME/dashboard.md` remains as a backward-compatible alias to the active project dashboard
 - When `SHOGUN_HOME == PROJECT_DIR`, it works the same as before (backward compatible)
 
 ### How to Launch
@@ -247,24 +251,26 @@ multi-agent-shogun can be installed in a fixed location and **launched from any 
 ```bash
 # Method 1: Navigate to your project, then launch
 cd ~/my-app
-~/tools/multi-agent-shogun/shutsujin_departure.sh
+~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
 
 # Method 2: Specify with -p flag (from anywhere)
-~/tools/multi-agent-shogun/shutsujin_departure.sh -p ~/my-app
+~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -p ~/my-app
 
 # Set up an alias for convenience (~/.bashrc)
-alias shogun='~/tools/multi-agent-shogun/shutsujin_departure.sh'
+alias shogun='~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh'
 # → cd ~/my-app && shogun
 ```
 
 ### After Launch
 
 ```
-SHOGUN_HOME (~/tools/multi-agent-shogun/)     PROJECT_DIR (~/my-app/)
+SHOGUN_HOME (~/tools/multi-agent-shogun-Fe-wind/)     PROJECT_DIR (~/my-app/)
 ├── queue/          ← System communication    ├── src/          ← Ashigaru work here
 ├── config/         ← Settings                ├── package.json
 ├── instructions/   ← Agent instructions      └── ...
-├── dashboard.md    ← Progress reports
+├── dashboards/
+│   └── my-app/dashboard.md  ← Project dashboard
+├── dashboard.md    ← Alias to active project dashboard (compat)
 └── ...
 ```
 
@@ -299,7 +305,13 @@ Meanwhile, the Karo distributes the work to Ashigaru workers who execute in para
 
 ### Step 3: Check Progress
 
-Open `dashboard.md` in your editor to see real-time status:
+Open the project dashboard in your editor to see real-time status:
+
+```bash
+cat "$SHOGUN_HOME/dashboards/$PROJECT_ID/dashboard.md"
+# Legacy-compatible path (points to active project)
+cat "$SHOGUN_HOME/dashboard.md"
+```
 
 ```markdown
 ## In Progress
@@ -333,7 +345,11 @@ You: Give order → Shogun: Delegates → You: Can give next order immediately
                                            ↓
                          Workers: Execute in background
                                            ↓
-                         Dashboard: Shows results
+                         Karo updates dashboard
+                                           ↓
+                         Karo notifies Shogun on completion
+                                           ↓
+                         Dashboard: Shows results / Shogun can relay status
 ```
 
 You never have to wait for long tasks to complete.
@@ -603,10 +619,10 @@ language: en   # Japanese + English translation
 
 ```bash
 # Default: Launch with current directory as the target project
-cd ~/my-project && ~/tools/multi-agent-shogun/shutsujin_departure.sh
+cd ~/my-project && ~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
 
 # Specify project directory with -p
-~/tools/multi-agent-shogun/shutsujin_departure.sh -p ~/my-project
+~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -p ~/my-project
 
 # Session setup only (without launching Claude Code)
 ./shutsujin_departure.sh -s
@@ -625,8 +641,10 @@ cd ~/my-project && ~/tools/multi-agent-shogun/shutsujin_departure.sh
 
 | Variable | Meaning | Example |
 |----------|---------|---------|
-| `SHOGUN_HOME` | Tool installation directory | `~/tools/multi-agent-shogun` |
+| `SHOGUN_HOME` | Tool installation directory | `~/tools/multi-agent-shogun-Fe-wind` |
 | `PROJECT_DIR` | Target project directory | `/home/user/my-app` |
+| `PROJECT_ID` | Resolved project identifier | `my-app` |
+| `DASHBOARD_PATH` | Active dashboard path | `~/tools/multi-agent-shogun-Fe-wind/dashboards/my-app/dashboard.md` |
 
 System files (queue/, config/, instructions/, etc.) live in `SHOGUN_HOME`, while actual coding work happens in `PROJECT_DIR`.
 
@@ -638,13 +656,13 @@ System files (queue/, config/, instructions/, etc.) live in `SHOGUN_HOME`, while
 **Normal Daily Usage:**
 ```bash
 cd ~/my-project
-~/tools/multi-agent-shogun/shutsujin_departure.sh  # Start everything
+~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh  # Start everything
 tmux attach-session -t shogun                       # Connect to give commands
 ```
 
 **Debug Mode (manual control):**
 ```bash
-~/tools/multi-agent-shogun/shutsujin_departure.sh -s  # Create sessions only
+~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -s  # Create sessions only
 
 # Manually start Claude Code on specific agents
 tmux send-keys -t shogun:0 'claude --dangerously-skip-permissions' Enter
@@ -659,7 +677,7 @@ tmux kill-session -t multiagent
 
 # Start fresh
 cd ~/my-project
-~/tools/multi-agent-shogun/shutsujin_departure.sh
+~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
 ```
 
 </details>
@@ -690,11 +708,15 @@ multi-agent-shogun/
 │
 ├── queue/                    # Communication files
 │   ├── shogun_to_karo.yaml   # Commands from Shogun to Karo
+│   ├── karo_to_shogun.yaml   # Completion notifications from Karo to Shogun
 │   ├── tasks/                # Individual worker task files
 │   └── reports/              # Worker reports
 │
 ├── memory/                   # Memory MCP storage
-├── dashboard.md              # Real-time status overview
+├── dashboards/               # Project dashboards
+│   └── {project_id}/
+│       └── dashboard.md
+├── dashboard.md              # Alias to active project dashboard (compat)
 └── CLAUDE.md                 # Project context for Claude
 ```
 
@@ -742,14 +764,42 @@ tmux attach-session -t multiagent
 
 </details>
 
+<details>
+<summary><b>tmux says "sessions should be nested with care"?</b></summary>
+
+Cause:
+1. Command typo like `tmux attach-session -t shoguntmux attach-session -t shogun`
+2. Running `attach-session` from inside an existing tmux session
+
+Use this inside tmux:
+```bash
+tmux ls
+tmux switch-client -t shogun
+tmux switch-client -t multiagent
+```
+
+Use this only from a normal shell (outside tmux):
+```bash
+tmux attach-session -t shogun
+```
+
+Force attach from inside tmux (not recommended):
+```bash
+TMUX= tmux attach-session -t shogun
+```
+
+</details>
+
 ---
 
 ## 📚 tmux Quick Reference
 
 | Command | Description |
 |---------|-------------|
-| `tmux attach -t shogun` | Connect to Shogun |
-| `tmux attach -t multiagent` | Connect to workers |
+| `tmux attach-session -t shogun` | Connect to Shogun (outside tmux) |
+| `tmux attach-session -t multiagent` | Connect to workers (outside tmux) |
+| `tmux switch-client -t shogun` | Switch to Shogun (inside tmux) |
+| `tmux switch-client -t multiagent` | Switch to workers (inside tmux) |
 | `Ctrl+B` then `0-8` | Switch between panes |
 | `Ctrl+B` then `d` | Detach (leave running) |
 | `tmux kill-session -t shogun` | Stop Shogun session |
