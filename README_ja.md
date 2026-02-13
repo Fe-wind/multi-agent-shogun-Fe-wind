@@ -1,4 +1,4 @@
-# multi-agent-shogun
+# multi-agent-daiku
 
 <div align="center">
 
@@ -18,7 +18,7 @@
 
 ## これは何？
 
-**multi-agent-shogun** は、複数の Claude Code インスタンスを同時に実行し、棟梁中心の工房体制のように統率するシステムです。
+**multi-agent-daiku** は、複数の Claude Code インスタンスを同時に実行し、棟梁中心の工房体制のように統率するシステムです。
 
 **なぜ使うのか？**
 - 1つの命令で、8体のAIワーカーが並列で実行
@@ -27,7 +27,7 @@
 - ダッシュボードでリアルタイム進捗確認
 
 ```
-      あなた（上様）
+      あなた（施主）
           │
           ▼ 命令を出す
     ┌─────────────┐
@@ -61,9 +61,9 @@
 
 📥 **リポジトリをダウンロード**
 
-[ZIPダウンロード](https://github.com/yohey-w/multi-agent-shogun/archive/refs/heads/main.zip) して `C:\tools\multi-agent-shogun` に展開
+[ZIPダウンロード](https://github.com/yohey-w/multi-agent-daiku/archive/refs/heads/main.zip) して `C:\tools\multi-agent-daiku` に展開
 
-*または git を使用:* `git clone https://github.com/yohey-w/multi-agent-shogun.git C:\tools\multi-agent-shogun`
+*または git を使用:* `git clone https://github.com/yohey-w/multi-agent-daiku.git C:\tools\multi-agent-daiku`
 
 </td>
 </tr>
@@ -75,7 +75,7 @@
 </td>
 <td>
 
-🖱️ **`install.bat` をダブルクリック**
+🖱️ **`koubou_install.bat` をダブルクリック**
 
 これだけ！インストーラーが全て自動で処理します。
 
@@ -102,10 +102,10 @@
 ```bash
 # 作業対象プロジェクトのディレクトリに移動してから起動
 cd /mnt/c/Users/you/my-project
-/mnt/c/tools/multi-agent-shogun/shutsujin_departure.sh
+/mnt/c/tools/multi-agent-daiku/koubou_hajime.sh
 
 # または -p オプションでプロジェクトを指定
-/mnt/c/tools/multi-agent-shogun/shutsujin_departure.sh -p /mnt/c/Users/you/my-project
+/mnt/c/tools/multi-agent-daiku/koubou_hajime.sh -p /mnt/c/Users/you/my-project
 ```
 
 ---
@@ -117,14 +117,14 @@ cd /mnt/c/Users/you/my-project
 
 ```bash
 # 1. リポジトリをクローン
-git clone https://github.com/yohey-w/multi-agent-shogun.git ~/multi-agent-shogun
-cd ~/multi-agent-shogun
+git clone https://github.com/yohey-w/multi-agent-daiku.git ~/multi-agent-daiku
+cd ~/multi-agent-daiku
 
 # 2. スクリプトに実行権限を付与
 chmod +x *.sh
 
 # 3. 初回セットアップを実行
-./first_setup.sh
+./koubou_junbi.sh
 ```
 
 ### 毎日の起動
@@ -132,10 +132,10 @@ chmod +x *.sh
 ```bash
 # 作業対象プロジェクトのディレクトリから起動
 cd ~/my-project
-~/multi-agent-shogun/shutsujin_departure.sh
+~/multi-agent-daiku/koubou_hajime.sh
 
 # または -p オプションでプロジェクトを指定
-~/multi-agent-shogun/shutsujin_departure.sh -p ~/my-project
+~/multi-agent-daiku/koubou_hajime.sh -p ~/my-project
 ```
 
 </details>
@@ -151,7 +151,7 @@ cd ~/my-project
 
 ### WSL2がまだない場合
 
-問題ありません！`install.bat` を実行すると：
+問題ありません！`koubou_install.bat` を実行すると：
 1. WSL2がインストールされているかチェック
 2. なければ、インストール方法を案内
 3. 全プロセスをガイド
@@ -161,7 +161,7 @@ cd ~/my-project
 wsl --install
 ```
 
-その後、コンピュータを再起動して `install.bat` を再実行してください。
+その後、コンピュータを再起動して `koubou_install.bat` を再実行してください。
 
 </details>
 
@@ -172,17 +172,17 @@ wsl --install
 
 | スクリプト | 用途 | 実行タイミング |
 |-----------|------|---------------|
-| `install.bat` | Windows: 初回セットアップ（WSL経由でfirst_setup.shを実行） | 初回のみ |
-| `first_setup.sh` | tmux、Node.js、Claude Code CLI をインストール | 初回のみ |
-| `shutsujin_departure.sh` | tmuxセッション作成 + Claude Code起動 + 指示書読み込み | 毎日 |
+| `koubou_install.bat` | Windows: 初回セットアップ（WSL経由でkoubou_junbi.shを実行） | 初回のみ |
+| `koubou_junbi.sh` | tmux、Node.js、Claude Code CLI をインストール | 初回のみ |
+| `koubou_hajime.sh` | tmuxセッション作成 + Claude Code起動 + 指示書読み込み | 毎日 |
 
-### `install.bat` が自動で行うこと：
+### `koubou_install.bat` が自動で行うこと：
 - ✅ WSL2がインストールされているかチェック
-- ✅ Ubuntuを開いて `first_setup.sh` を実行
+- ✅ Ubuntuを開いて `koubou_junbi.sh` を実行
 - ✅ tmux、Node.js、Claude Code CLI をインストール
 - ✅ 必要なディレクトリを作成
 
-### `shutsujin_departure.sh` が行うこと：
+### `koubou_hajime.sh` が行うこと：
 - ✅ tmuxセッションを作成（toryo + multiagent）
 - ✅ 全10エージェントでClaude Codeを起動
 - ✅ 各エージェントに指示書を自動読み込み
@@ -217,9 +217,9 @@ wsl --install
 
 | エージェント | 役割 | 数 |
 |-------------|------|-----|
-| 🏯 棟梁（Toryo） | 親方 - あなたの命令を受ける | 1 |
+| 🪚 棟梁（Toryo） | 親方 - あなたの命令を受ける | 1 |
 | 📋 番頭（Banto） | 段取り役 - タスクを分配 | 1 |
-| ⚔️ 大工衆（Daikushu） | 職人衆 - 並列でタスク実行 | 8 |
+| 🔨 大工衆（Daikushu） | 職人衆 - 並列でタスク実行 | 8 |
 
 tmuxセッションが作成されます：
 - `toryo` - ここに接続してコマンドを出す
@@ -229,7 +229,7 @@ tmuxセッションが作成されます：
 
 ## 🚀 ランチャーモード（任意のプロジェクトで使う）
 
-multi-agent-shogun はツール本体を固定の場所に置いたまま、**任意のプロジェクトディレクトリ**から起動できます。
+multi-agent-daiku はツール本体を固定の場所に置いたまま、**任意のプロジェクトディレクトリ**から起動できます。
 
 ### 仕組み
 
@@ -243,22 +243,22 @@ multi-agent-shogun はツール本体を固定の場所に置いたまま、**�
 - 全tmuxペインの作業ディレクトリが `PROJECT_DIR` に設定される
 - queue/, config/ 等のシステムファイルは `TORYO_HOME` 内を参照
 - ダッシュボードはプロジェクト単位で `dashboards/{project_id}/dashboard.md` に生成される
-- `TORYO_HOME/dashboard.md` は後方互換のため、現在アクティブなプロジェクトのエイリアスとして維持される
+- `TORYO_HOME/dashboard.md` は現在アクティブなプロジェクトへのショートカットとして生成される
 - `PROJECT_DIR` が `config/projects.yaml` に無い場合、起動時に自動登録される
-- `TORYO_HOME == PROJECT_DIR` のときは従来モード（後方互換）
+- `TORYO_HOME == PROJECT_DIR` のときは単一ディレクトリで運用
 
 ### 起動方法
 
 ```bash
 # 方法1: プロジェクトディレクトリに移動してから起動
 cd ~/my-app
-~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
+~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh
 
 # 方法2: -p オプションで指定（どこからでも）
-~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -p ~/my-app
+~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh -p ~/my-app
 
 # エイリアスを設定すると便利（~/.bashrc に追加）
-alias toryo='~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh'
+alias toryo='~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh'
 # → cd ~/my-app && toryo で起動可能
 ```
 
@@ -276,13 +276,13 @@ alias toryo='~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh'
 ### 起動後の状態
 
 ```
-TORYO_HOME (~/tools/multi-agent-shogun-Fe-wind/)     PROJECT_DIR (~/my-app/)
+TORYO_HOME (~/tools/multi-agent-daiku-Fe-wind/)     PROJECT_DIR (~/my-app/)
 ├── queue/          ← システム通信          ├── src/          ← 大工衆がここで作業
 ├── config/         ← 設定                ├── package.json
 ├── instructions/   ← 指示書              └── ...
 ├── dashboards/
 │   └── my-app/dashboard.md  ← プロジェクト別ダッシュボード
-├── dashboard.md    ← 現在アクティブなプロジェクトへの互換エイリアス
+├── dashboard.md    ← 現在アクティブなプロジェクトへのショートカットエイリアス
 └── ...
 ```
 
@@ -292,7 +292,7 @@ TORYO_HOME (~/tools/multi-agent-shogun-Fe-wind/)     PROJECT_DIR (~/my-app/)
 
 ### Step 1: 棟梁に接続
 
-`shutsujin_departure.sh` 実行後、全エージェントが自動的に指示書を読み込み、作業準備完了となります。
+`koubou_hajime.sh` 実行後、全エージェントが自動的に指示書を読み込み、作業準備完了となります。
 
 新しいターミナルを開いて棟梁に接続：
 
@@ -321,7 +321,7 @@ JavaScriptフレームワーク上位5つを調査して比較表を作成せよ
 
 ```bash
 cat "$TORYO_HOME/dashboards/$PROJECT_ID/dashboard.md"
-# 従来互換パス（アクティブなプロジェクトを指す）
+# ショートカットパス（アクティブなプロジェクトを指す）
 cat "$TORYO_HOME/dashboard.md"
 ```
 
@@ -411,8 +411,8 @@ screenshot:
 
 | レイヤー | 場所 | 用途 |
 |---------|------|------|
-| Memory MCP | `memory/toryo_memory.jsonl` | セッションを跨ぐ長期記憶 |
-| グローバル | `memory/global_context.md` | システム全体の設定、殿の好み |
+| Memory MCP | `memory/daiku_memory.jsonl` | セッションを跨ぐ長期記憶 |
+| グローバル | `memory/global_context.md` | システム全体の設定、施主の好み |
 | プロジェクト | `context/{project}.md` | プロジェクト固有の知見 |
 
 この設計により：
@@ -470,7 +470,7 @@ screenshot:
 
 1. **単一更新者**: 競合を防ぐため、更新責任者を1人に限定
 2. **情報集約**: 番頭は全大工衆の報告を受ける立場なので全体像を把握
-3. **割り込み防止**: 棟梁が更新すると、殿の入力中に割り込む恐れあり
+3. **割り込み防止**: 棟梁が更新すると、施主の入力中に割り込む恐れあり
 
 ---
 
@@ -481,7 +481,7 @@ screenshot:
 
 スキルは `/スキル名` で呼び出し可能。棟梁に「/スキル名 を実行」と伝えるだけ。
 
-### Codex `AGENTS.md` 記載例（`$multi-agent-shogun`）
+### Codex `AGENTS.md` 記載例（`$multi-agent-daiku`）
 
 Codex 向けの指示ファイルは `AGENTS.md` に統一して記述する。
 
@@ -489,9 +489,9 @@ Codex 向けの指示ファイルは `AGENTS.md` に統一して記述する。
 
 ```markdown
 # AGENTS.md
-toryo運用ファイル（`shutsujin_departure.sh`, `instructions/*.md`,
+toryo運用ファイル（`koubou_hajime.sh`, `instructions/*.md`,
 `queue/*.yaml`, `config/*.yaml`, `dashboard.md`）に触れる作業では、
-必ず $multi-agent-shogun を使う。
+必ず $multi-agent-daiku を使う。
 
 プロトコルは固定:
 - User -> Toryo -> Banto -> Daikushu
@@ -503,7 +503,7 @@ toryo運用ファイル（`shutsujin_departure.sh`, `instructions/*.md`,
 ```markdown
 # AGENTS.md
 このシステムのセットアップ・起動・障害対応タスクでは、
-ファイル編集前に $multi-agent-shogun を明示的に呼び出す。
+ファイル編集前に $multi-agent-daiku を明示的に呼び出す。
 ```
 
 **3. サブディレクトリで上書きする**
@@ -511,15 +511,15 @@ toryo運用ファイル（`shutsujin_departure.sh`, `instructions/*.md`,
 ```markdown
 # frontend/AGENTS.md
 ルートAGENTS.mdを継承する。
-frontend限定の変更でも、dashboard/queue/instructions 互換に影響する場合は
-$multi-agent-shogun を明示的に呼び出す。
+frontend限定の変更でも、dashboard/queue/instructions の挙動に影響する場合は
+$multi-agent-daiku を明示的に呼び出す。
 ```
 
 **4. スキル未使用時のフォールバック**
 
 ```markdown
 # AGENTS.md
-第一選択は $multi-agent-shogun。
+第一選択は $multi-agent-daiku。
 使えない場合は `README.md` と `instructions/{toryo,banto,daikushu}.md` を先に読み、
 同じ階層指揮系統とYAMLキュープロトコルを手動で適用する。
 ```
@@ -539,7 +539,7 @@ $multi-agent-shogun を明示的に呼び出す。
     ↓
 dashboard.md の「スキル化候補」に上がる
     ↓
-殿（あなた）が内容を確認
+施主（あなた）が内容を確認
     ↓
 承認すれば番頭に指示してスキルを作成
 ```
@@ -578,7 +578,7 @@ claude mcp add github -e GITHUB_PERSONAL_ACCESS_TOKEN=your_pat_here -- npx -y @m
 claude mcp add sequential-thinking -- npx -y @modelcontextprotocol/server-sequential-thinking
 
 # 5. Memory - セッション間の長期記憶（推奨！）
-claude mcp add memory -e MEMORY_FILE_PATH="$PWD/memory/toryo_memory.jsonl" -- npx -y @modelcontextprotocol/server-memory
+claude mcp add memory -e MEMORY_FILE_PATH="$PWD/memory/daiku_memory.jsonl" -- npx -y @modelcontextprotocol/server-memory
 ```
 
 ### インストール確認
@@ -648,9 +648,9 @@ language: en   # 日本語 + 英訳併記
 │                      初回セットアップ（1回だけ実行）                   │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  install.bat (Windows)                                              │
+│  koubou_install.bat (Windows)                                              │
 │      │                                                              │
-│      └──▶ first_setup.sh (WSL経由)                                  │
+│      └──▶ koubou_junbi.sh (WSL経由)                                  │
 │                │                                                    │
 │                ├── tmuxのチェック/インストール                        │
 │                ├── Node.js v20+のチェック/インストール (nvm経由)       │
@@ -660,7 +660,7 @@ language: en   # 日本語 + 英訳併記
 │                      毎日の起動（毎日実行）                           │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  shutsujin_departure.sh                                             │
+│  koubou_hajime.sh                                             │
 │      │                                                              │
 │      ├──▶ tmuxセッションを作成                                       │
 │      │         • "toryo"セッション（1ペイン）                        │
@@ -676,36 +676,36 @@ language: en   # 日本語 + 英訳併記
 </details>
 
 <details>
-<summary><b>shutsujin_departure.sh オプション</b>（クリックで展開）</summary>
+<summary><b>koubou_hajime.sh オプション</b>（クリックで展開）</summary>
 
 ```bash
 # デフォルト: カレントディレクトリを対象プロジェクトとしてフル起動
-cd ~/my-project && ~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
+cd ~/my-project && ~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh
 
 # -p でプロジェクトディレクトリを指定
-~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -p ~/my-project
+~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh -p ~/my-project
 
 # セッションセットアップのみ（Claude Code起動なし）
-./shutsujin_departure.sh -s
-./shutsujin_departure.sh --setup-only
+./koubou_hajime.sh -s
+./koubou_hajime.sh --setup-only
 
 # フル起動 + Windows Terminalタブを開く
-./shutsujin_departure.sh -t
-./shutsujin_departure.sh --terminal
+./koubou_hajime.sh -t
+./koubou_hajime.sh --terminal
 
 # ヘルプを表示
-./shutsujin_departure.sh -h
-./shutsujin_departure.sh --help
+./koubou_hajime.sh -h
+./koubou_hajime.sh --help
 ```
 
 **ディレクトリ変数:**
 
 | 変数 | 意味 | 例 |
 |------|------|-----|
-| `TORYO_HOME` | ツール本体の場所 | `~/tools/multi-agent-shogun-Fe-wind` |
+| `TORYO_HOME` | ツール本体の場所 | `~/tools/multi-agent-daiku-Fe-wind` |
 | `PROJECT_DIR` | 作業対象プロジェクト | `/home/user/my-app` |
 | `PROJECT_ID` | 解決済みプロジェクトID | `my-app` |
-| `DASHBOARD_PATH` | 現在のダッシュボードパス | `~/tools/multi-agent-shogun-Fe-wind/dashboards/my-app/dashboard.md` |
+| `DASHBOARD_PATH` | 現在のダッシュボードパス | `~/tools/multi-agent-daiku-Fe-wind/dashboards/my-app/dashboard.md` |
 
 `TORYO_HOME` 内にはシステムファイル（queue/, config/, instructions/ 等）が配置され、`PROJECT_DIR` 内で実際のコーディング作業を行います。
 
@@ -717,13 +717,13 @@ cd ~/my-project && ~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
 **通常の毎日の使用：**
 ```bash
 cd ~/my-project
-~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh  # 全て起動
+~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh  # 全て起動
 tmux attach-session -t toryo                       # 接続してコマンドを出す
 ```
 
 **デバッグモード（手動制御）：**
 ```bash
-~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -s  # セッションのみ作成
+~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh -s  # セッションのみ作成
 
 # 特定のエージェントでClaude Codeを手動起動
 tmux send-keys -t toryo:0 'claude --dangerously-skip-permissions' Enter
@@ -738,7 +738,7 @@ tmux kill-session -t multiagent
 
 # 新しく起動
 cd ~/my-project
-~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
+~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh
 ```
 
 </details>
@@ -750,7 +750,7 @@ cd ~/my-project
 
 ```bash
 # 任意のプロジェクトディレクトリから起動（カレントディレクトリが PROJECT_DIR になる）
-alias toryo='/mnt/c/tools/multi-agent-shogun/shutsujin_departure.sh'
+alias toryo='/mnt/c/tools/multi-agent-daiku/koubou_hajime.sh'
 alias css='tmux attach-session -t toryo'
 alias csm='tmux attach-session -t multiagent'
 ```
@@ -772,12 +772,12 @@ toryo -p ~/other   # 別のプロジェクトを指定して起動
 <summary><b>クリックでファイル構成を展開</b></summary>
 
 ```
-multi-agent-shogun/
+multi-agent-daiku/
 │
 │  ┌─────────────────── セットアップスクリプト ───────────────────┐
-├── install.bat               # Windows: 初回セットアップ
-├── first_setup.sh            # Ubuntu/Mac: 初回セットアップ
-├── shutsujin_departure.sh    # 毎日の起動（指示書自動読み込み）
+├── koubou_install.bat               # Windows: 初回セットアップ
+├── koubou_junbi.sh            # Ubuntu/Mac: 初回セットアップ
+├── koubou_hajime.sh    # 毎日の起動（指示書自動読み込み）
 │  └────────────────────────────────────────────────────────────┘
 │
 ├── instructions/             # エージェント指示書
@@ -798,7 +798,7 @@ multi-agent-shogun/
 ├── dashboards/               # プロジェクト別ダッシュボード
 │   └── {project_id}/
 │       └── dashboard.md
-├── dashboard.md              # 現在アクティブなダッシュボードへの互換エイリアス
+├── dashboard.md              # 現在アクティブなダッシュボードへのショートカットエイリアス
 └── CLAUDE.md                 # Claude用プロジェクトコンテキスト
 ```
 

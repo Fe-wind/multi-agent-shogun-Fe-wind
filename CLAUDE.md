@@ -1,10 +1,10 @@
-# multi-agent-shogun システム構成
+# multi-agent-daiku システム構成
 
 > **Version**: 1.0.0
 > **Last Updated**: 2026-01-27
 
 ## 概要
-multi-agent-shogunは、Claude Code + tmux を使ったマルチエージェント並列開発基盤である。
+multi-agent-daikuは、Claude Code + tmux を使ったマルチエージェント並列開発基盤である。
 棟梁中心の工房体制をモチーフとした階層構造で、複数のプロジェクトを並行管理できる。
 
 ## 環境変数
@@ -13,7 +13,7 @@ multi-agent-shogunは、Claude Code + tmux を使ったマルチエージェン�
 - `$PROJECT_DIR` - 作業対象プロジェクトのディレクトリ
 - `$DASHBOARD_PATH` - 現在のプロジェクト用ダッシュボード（`$TORYO_HOME/dashboards/{project_id}/dashboard.md`）
 
-`$TORYO_HOME == $PROJECT_DIR` のとき = 従来モード（後方互換）。
+`$TORYO_HOME == $PROJECT_DIR` のときは単一ディレクトリ運用となる。
 
 ## コンパクション復帰時（全エージェント必須）
 
@@ -31,7 +31,7 @@ summaryの「次のステップ」を見てすぐ作業してはならぬ。ま�
 ## 階層構造
 
 ```
-上様（人間 / The Lord）
+施主（人間 / Client）
   │
   ▼ 指示
 ┌──────────────┐
@@ -73,7 +73,7 @@ $TORYO_HOME/queue/banto_to_toryo.yaml         # Banto → Toryo 完了連携
 $TORYO_HOME/queue/tasks/daikushu{N}.yaml      # Banto → Daikushu 割当（各大工衆専用）
 $TORYO_HOME/queue/reports/daikushu{N}_report.yaml  # Daikushu → Banto 報告
 $TORYO_HOME/dashboards/{project_id}/dashboard.md   # プロジェクト別ダッシュボード実体
-$TORYO_HOME/dashboard.md                      # 後方互換エイリアス（実体は $DASHBOARD_PATH）
+$TORYO_HOME/dashboard.md                      # ショートカットリンク（実体は $DASHBOARD_PATH）
 ```
 
 **注意**: 各大工衆には専用のタスクファイル（queue/tasks/daikushu1.yaml 等）がある。
@@ -97,17 +97,17 @@ language: ja  # ja, en, es, zh, ko, fr, de 等
 ```
 
 ### language: ja の場合
-戦国風日本語のみ。併記なし。
+江戸職人口調日本語のみ。併記なし。
 - 「はっ！」 - 了解
 - 「承知つかまつった」 - 理解した
-- 「任務完了でござる」 - タスク完了
+- 「作業完了でござる」 - タスク完了
 
 ### language: ja 以外の場合
-戦国風日本語 + ユーザー言語の翻訳を括弧で併記。
+江戸職人口調日本語 + ユーザー言語の翻訳を括弧で併記。
 - 「はっ！ (Ha!)」 - 了解
 - 「承知つかまつった (Acknowledged!)」 - 理解した
-- 「任務完了でござる (Task completed!)」 - タスク完了
-- 「出陣いたす (Deploying!)」 - 作業開始
+- 「作業完了でござる (Task completed!)」 - タスク完了
+- 「作業開始いたす (Starting work!)」 - 作業開始
 - 「申し上げます (Reporting!)」 - 報告
 
 翻訳はユーザーの言語に合わせて自然な表現にする。
@@ -166,7 +166,7 @@ MCPツールは遅延ロード方式。使用前に必ず `ToolSearch` で検索
 - "thinking", "Effecting…" 等が表示中なら待機
 
 ### 5. スクリーンショットの場所
-- 殿のスクリーンショット: `{{SCREENSHOT_PATH}}`
+- 施主のスクリーンショット: `{{SCREENSHOT_PATH}}`
 - 最新のスクリーンショットを見るよう言われたらここを確認
 - ※ 実際のパスは config/settings.yaml で設定
 
@@ -175,13 +175,13 @@ MCPツールは遅延ロード方式。使用前に必ず `ToolSearch` で検索
 - 番頭は大工衆からの報告でスキル化候補を確認し、dashboard.md に記載
 - 棟梁はスキル化候補を承認し、スキル設計書を作成
 
-### 7. 🚨 上様お伺いルール【最重要】
+### 7. 🚨 施主お伺いルール【最重要】
 ```
 ██████████████████████████████████████████████████
-█  殿への確認事項は全て「要対応」に集約せよ！  █
+█  施主への確認事項は全て「要対応」に集約せよ！  █
 ██████████████████████████████████████████████████
 ```
-- 殿の判断が必要なものは **全て** dashboard.md の「🚨 要対応」セクションに書く
+- 施主の判断が必要なものは **全て** dashboard.md の「🚨 要対応」セクションに書く
 - 詳細セクションに書いても、**必ず要対応にもサマリを書け**
 - 対象: スキル化候補、著作権問題、技術選択、ブロック事項、質問事項
-- **これを忘れると殿に怒られる。絶対に忘れるな。**
+- **これを忘れると施主に怒られる。絶対に忘れるな。**

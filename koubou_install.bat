@@ -1,10 +1,10 @@
 @echo off
 chcp 65001 >nul 2>&1
-title multi-agent-shogun Installer
+title multi-agent-daiku Installer
 
 echo.
 echo   ╔══════════════════════════════════════════════════════════╗
-echo   ║  🏯 multi-agent-shogun - Auto Installer                  ║
+echo   ║  🪚 multi-agent-daiku - Auto Installer                  ║
 echo   ║     全自動セットアップ                                   ║
 echo   ╚══════════════════════════════════════════════════════════╝
 echo.
@@ -28,8 +28,8 @@ if %ERRORLEVEL% NEQ 0 (
         echo   ║     管理者権限が必要です                                 ║
         echo   ╚══════════════════════════════════════════════════════════╝
         echo.
-        echo   Right-click install.bat and select "Run as administrator"
-        echo   install.bat を右クリック→「管理者として実行」
+        echo   Right-click koubou_install.bat and select "Run as administrator"
+        echo   koubou_install.bat を右クリック→「管理者として実行」
         echo.
         pause
         exit /b 1
@@ -44,8 +44,8 @@ if %ERRORLEVEL% NEQ 0 (
     echo   ║     再起動が必要です                                     ║
     echo   ╚══════════════════════════════════════════════════════════╝
     echo.
-    echo   After restart, run install.bat again.
-    echo   再起動後、もう一度 install.bat を実行してください。
+    echo   After restart, run koubou_install.bat again.
+    echo   再起動後、もう一度 koubou_install.bat を実行してください。
     echo.
     pause
     exit /b 0
@@ -78,8 +78,8 @@ if %ERRORLEVEL% NEQ 0 (
     echo   2. Set your username and password
     echo      ユーザー名とパスワードを設定
     echo.
-    echo   3. Run install.bat again
-    echo      もう一度 install.bat を実行
+    echo   3. Run koubou_install.bat again
+    echo      もう一度 koubou_install.bat を実行
     echo.
     pause
     exit /b 0
@@ -103,12 +103,12 @@ if "%WIN_PATH:~-1%"=="/" set "WIN_PATH=%WIN_PATH:~0,-1%"
 echo   ✅ Path: %WIN_PATH%
 echo.
 
-REM ===== Step 4: Run first_setup.sh =====
-echo   [4/4] Running first_setup.sh...
-echo         first_setup.sh 実行中...
+REM ===== Step 4: Run koubou_junbi.sh =====
+echo   [4/4] Running koubou_junbi.sh...
+echo         koubou_junbi.sh 実行中...
 echo.
 
-wsl.exe -e bash -c "cd '%WIN_PATH%' && chmod +x *.sh && ./first_setup.sh"
+wsl.exe -e bash -c "cd '%WIN_PATH%' && chmod +x *.sh && ./koubou_junbi.sh"
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
@@ -135,7 +135,7 @@ echo   │  Open WSL terminal and run:                              │
 echo   │  WSL ターミナルを開いて実行:                             │
 echo   │                                                          │
 echo   │    cd %WIN_PATH%
-echo   │    ./shutsujin_departure.sh                              │
+echo   │    ./koubou_hajime.sh                              │
 echo   │                                                          │
 echo   └──────────────────────────────────────────────────────────┘
 echo.

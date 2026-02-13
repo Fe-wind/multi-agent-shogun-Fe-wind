@@ -1,15 +1,15 @@
-# multi-agent-shogun 設定ファイル
+# multi-agent-daiku 設定ファイル
 
 # 言語設定
-# ja: 日本語（戦国風日本語のみ、併記なし）
-# en: 英語（戦国風日本語 + 英訳併記）
+# ja: 日本語（江戸職人口調日本語のみ、併記なし）
+# en: 英語（江戸職人口調日本語 + 英訳併記）
 # その他の言語コード（es, zh, ko, fr, de 等）も対応
 language: ja
 
 # スキル設定
 skill:
   # スキル保存先（生成されたスキルはここに保存）
-  save_path: "~/.claude/skills/toryo-generated/"
+  save_path: "~/.claude/skills/daiku-generated/"
 
   # ローカルスキル保存先（$TORYO_HOME相対）
   local_path: "skills/"

@@ -15,3 +15,15 @@ projects:
       キャスティング業界向けAI×SaaSプラットフォーム。
       タレント検索・リスト作成の自動化により、従来半日かかっていた作業を10分で提出物化。
       キラーフィーチャー: Surprise-but-Right（意外なのに納得）提案
+
+  - id: koreki-core-codex-de440
+    name: "koreki-core-codex-de440"
+    path: "/home/tryadmin/koreki-core-codex-de440"
+    priority: medium
+    status: active
+
+  - id: multi-agent-daiku-Fe-wind
+    name: "multi-agent-daiku-Fe-wind"
+    path: "/home/tryadmin/tools/multi-agent-daiku-Fe-wind"
+    priority: medium
+    status: active

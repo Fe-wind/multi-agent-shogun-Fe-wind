@@ -1,4 +1,4 @@
-# multi-agent-shogun
+# multi-agent-daiku
 
 <div align="center">
 
@@ -18,7 +18,7 @@
 
 ## What is this?
 
-**multi-agent-shogun** is a system that runs multiple Claude Code instances simultaneously, organized like a master-carpenter workshop hierarchy.
+**multi-agent-daiku** is a system that runs multiple Claude Code instances simultaneously, organized like a master-carpenter workshop hierarchy.
 
 **Why use this?**
 - Give one command, get 8 AI workers executing in parallel
@@ -27,7 +27,7 @@
 - Real-time progress tracking via dashboard
 
 ```
-        You (The Lord)
+        You (Client)
              │
              ▼ Give orders
       ┌─────────────┐
@@ -61,9 +61,9 @@
 
 📥 **Download this repository**
 
-[Download ZIP](https://github.com/yohey-w/multi-agent-shogun/archive/refs/heads/main.zip) and extract to `C:\tools\multi-agent-shogun`
+[Download ZIP](https://github.com/yohey-w/multi-agent-daiku/archive/refs/heads/main.zip) and extract to `C:\tools\multi-agent-daiku`
 
-*Or use git:* `git clone https://github.com/yohey-w/multi-agent-shogun.git C:\tools\multi-agent-shogun`
+*Or use git:* `git clone https://github.com/yohey-w/multi-agent-daiku.git C:\tools\multi-agent-daiku`
 
 </td>
 </tr>
@@ -75,7 +75,7 @@
 </td>
 <td>
 
-🖱️ **Double-click `install.bat`**
+🖱️ **Double-click `koubou_install.bat`**
 
 That's it! The installer handles everything automatically.
 
@@ -102,10 +102,10 @@ Open **Ubuntu terminal** (WSL), navigate to your project directory, and run:
 ```bash
 # Navigate to your project directory, then launch
 cd /mnt/c/Users/you/my-project
-/mnt/c/tools/multi-agent-shogun/shutsujin_departure.sh
+/mnt/c/tools/multi-agent-daiku/koubou_hajime.sh
 
 # Or specify the project directory with -p
-/mnt/c/tools/multi-agent-shogun/shutsujin_departure.sh -p /mnt/c/Users/you/my-project
+/mnt/c/tools/multi-agent-daiku/koubou_hajime.sh -p /mnt/c/Users/you/my-project
 ```
 
 ---
@@ -117,14 +117,14 @@ cd /mnt/c/Users/you/my-project
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yohey-w/multi-agent-shogun.git ~/multi-agent-shogun
-cd ~/multi-agent-shogun
+git clone https://github.com/yohey-w/multi-agent-daiku.git ~/multi-agent-daiku
+cd ~/multi-agent-daiku
 
 # 2. Make scripts executable
 chmod +x *.sh
 
 # 3. Run first-time setup
-./first_setup.sh
+./koubou_junbi.sh
 ```
 
 ### Daily Startup
@@ -132,10 +132,10 @@ chmod +x *.sh
 ```bash
 # Navigate to your project directory, then launch
 cd ~/my-project
-~/multi-agent-shogun/shutsujin_departure.sh
+~/multi-agent-daiku/koubou_hajime.sh
 
 # Or specify the project directory with -p
-~/multi-agent-shogun/shutsujin_departure.sh -p ~/my-project
+~/multi-agent-daiku/koubou_hajime.sh -p ~/my-project
 ```
 
 </details>
@@ -151,7 +151,7 @@ cd ~/my-project
 
 ### Don't have WSL2 yet?
 
-No problem! When you run `install.bat`, it will:
+No problem! When you run `koubou_install.bat`, it will:
 1. Check if WSL2 is installed
 2. If not, show you exactly how to install it
 3. Guide you through the entire process
@@ -161,7 +161,7 @@ No problem! When you run `install.bat`, it will:
 wsl --install
 ```
 
-Then restart your computer and run `install.bat` again.
+Then restart your computer and run `koubou_install.bat` again.
 
 </details>
 
@@ -172,17 +172,17 @@ Then restart your computer and run `install.bat` again.
 
 | Script | Purpose | When to Run |
 |--------|---------|-------------|
-| `install.bat` | Windows: First-time setup (runs first_setup.sh via WSL) | First time only |
-| `first_setup.sh` | Installs tmux, Node.js, Claude Code CLI | First time only |
-| `shutsujin_departure.sh` | Creates tmux sessions + starts Claude Code + loads instructions | Every day |
+| `koubou_install.bat` | Windows: First-time setup (runs koubou_junbi.sh via WSL) | First time only |
+| `koubou_junbi.sh` | Installs tmux, Node.js, Claude Code CLI | First time only |
+| `koubou_hajime.sh` | Creates tmux sessions + starts Claude Code + loads instructions | Every day |
 
-### What `install.bat` does automatically:
+### What `koubou_install.bat` does automatically:
 - ✅ Checks if WSL2 is installed
-- ✅ Opens Ubuntu and runs `first_setup.sh`
+- ✅ Opens Ubuntu and runs `koubou_junbi.sh`
 - ✅ Installs tmux, Node.js, and Claude Code CLI
 - ✅ Creates necessary directories
 
-### What `shutsujin_departure.sh` does:
+### What `koubou_hajime.sh` does:
 - ✅ Creates tmux sessions (toryo + multiagent)
 - ✅ Launches Claude Code on all 10 agents
 - ✅ Automatically loads instruction files for each agent
@@ -217,9 +217,9 @@ After running either option, **10 AI agents** will start automatically:
 
 | Agent | Role | Quantity |
 |-------|------|----------|
-| 🏯 Toryo | Master carpenter - receives your orders | 1 |
+| 🪚 Toryo | Master carpenter - receives your orders | 1 |
 | 📋 Banto | Foreman - distributes tasks | 1 |
-| ⚔️ Daikushu | Craft workers - execute tasks in parallel | 8 |
+| 🔨 Daikushu | Craft workers - execute tasks in parallel | 8 |
 
 You'll see tmux sessions created:
 - `toryo` - Connect here to give commands
@@ -229,7 +229,7 @@ You'll see tmux sessions created:
 
 ## 🚀 Launcher Mode (Use with Any Project)
 
-multi-agent-shogun can be installed in a fixed location and **launched from any project directory**.
+multi-agent-daiku can be installed in a fixed location and **launched from any project directory**.
 
 ### How It Works
 
@@ -243,22 +243,22 @@ multi-agent-shogun can be installed in a fixed location and **launched from any 
 - All tmux panes' working directory is set to `PROJECT_DIR`
 - System files (queue/, config/, etc.) are referenced from `TORYO_HOME`
 - Dashboard is initialized per project at `dashboards/{project_id}/dashboard.md`
-- `TORYO_HOME/dashboard.md` remains as a backward-compatible alias to the active project dashboard
+- `TORYO_HOME/dashboard.md` is provided as a shortcut to the active project dashboard
 - If `PROJECT_DIR` is not in `config/projects.yaml`, it is auto-registered at launch
-- When `TORYO_HOME == PROJECT_DIR`, it works the same as before (backward compatible)
+- When `TORYO_HOME == PROJECT_DIR`, it runs in single-directory mode
 
 ### How to Launch
 
 ```bash
 # Method 1: Navigate to your project, then launch
 cd ~/my-app
-~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
+~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh
 
 # Method 2: Specify with -p flag (from anywhere)
-~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -p ~/my-app
+~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh -p ~/my-app
 
 # Set up an alias for convenience (~/.bashrc)
-alias toryo='~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh'
+alias toryo='~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh'
 # → cd ~/my-app && toryo
 ```
 
@@ -276,13 +276,13 @@ In non-interactive shells, it automatically falls back to option `1`.
 ### After Launch
 
 ```
-TORYO_HOME (~/tools/multi-agent-shogun-Fe-wind/)     PROJECT_DIR (~/my-app/)
+TORYO_HOME (~/tools/multi-agent-daiku-Fe-wind/)     PROJECT_DIR (~/my-app/)
 ├── queue/          ← System communication    ├── src/          ← Daikushu work here
 ├── config/         ← Settings                ├── package.json
 ├── instructions/   ← Agent instructions      └── ...
 ├── dashboards/
 │   └── my-app/dashboard.md  ← Project dashboard
-├── dashboard.md    ← Alias to active project dashboard (compat)
+├── dashboard.md    ← Shortcut to active project dashboard
 └── ...
 ```
 
@@ -292,7 +292,7 @@ TORYO_HOME (~/tools/multi-agent-shogun-Fe-wind/)     PROJECT_DIR (~/my-app/)
 
 ### Step 1: Connect to Toryo
 
-After running `shutsujin_departure.sh`, all agents automatically load their instructions and are ready to work.
+After running `koubou_hajime.sh`, all agents automatically load their instructions and are ready to work.
 
 Open a new terminal and connect to the Toryo:
 
@@ -321,7 +321,7 @@ Open the project dashboard in your editor to see real-time status:
 
 ```bash
 cat "$TORYO_HOME/dashboards/$PROJECT_ID/dashboard.md"
-# Legacy-compatible path (points to active project)
+# Shortcut path (points to active project)
 cat "$TORYO_HOME/dashboard.md"
 ```
 
@@ -421,7 +421,7 @@ The system uses a three-layer context structure for efficient knowledge sharing:
 
 | Layer | Location | Purpose |
 |-------|----------|---------|
-| Memory MCP | `memory/toryo_memory.jsonl` | Persistent memory across sessions (preferences, decisions) |
+| Memory MCP | `memory/daiku_memory.jsonl` | Persistent memory across sessions (preferences, decisions) |
 | Global | `memory/global_context.md` | System-wide settings, user preferences |
 | Project | `context/{project}.md` | Project-specific knowledge and state |
 
@@ -456,7 +456,7 @@ Skills are not included in this repository by default.
 As you use the system, skill candidates will appear in `dashboard.md`.
 Review and approve them to grow your personal skill library.
 
-#### Codex `AGENTS.md` Examples (`$multi-agent-shogun`)
+#### Codex `AGENTS.md` Examples (`$multi-agent-daiku`)
 
 Use `AGENTS.md` as the single instruction file for Codex in your project.
 
@@ -464,8 +464,8 @@ Use `AGENTS.md` as the single instruction file for Codex in your project.
 
 ```markdown
 # AGENTS.md
-Use $multi-agent-shogun for all work that touches toryo orchestration files
-(`shutsujin_departure.sh`, `instructions/*.md`, `queue/*.yaml`, `config/*.yaml`, `dashboard.md`).
+Use $multi-agent-daiku for all work that touches toryo orchestration files
+(`koubou_hajime.sh`, `instructions/*.md`, `queue/*.yaml`, `config/*.yaml`, `dashboard.md`).
 
 Keep the protocol:
 - User -> Toryo -> Banto -> Daikushu
@@ -477,7 +477,7 @@ Keep the protocol:
 ```markdown
 # AGENTS.md
 When the request is about setup, launch, or troubleshooting of this system,
-explicitly invoke $multi-agent-shogun before editing files.
+explicitly invoke $multi-agent-daiku before editing files.
 ```
 
 **3. Subdirectory override**
@@ -486,15 +486,15 @@ explicitly invoke $multi-agent-shogun before editing files.
 # frontend/AGENTS.md
 Inherit root AGENTS.md.
 For frontend-only changes, keep root rules.
-If compatibility with dashboard/queue/instructions is affected,
-invoke $multi-agent-shogun explicitly.
+If dashboard/queue/instructions behavior is affected,
+invoke $multi-agent-daiku explicitly.
 ```
 
 **4. Fallback when skill is unavailable**
 
 ```markdown
 # AGENTS.md
-Primary path: use $multi-agent-shogun.
+Primary path: use $multi-agent-daiku.
 If unavailable, read `README.md` and `instructions/{toryo,banto,daikushu}.md` first,
 then follow the same hierarchy and YAML queue protocol manually.
 ```
@@ -572,7 +572,7 @@ claude mcp add github -e GITHUB_PERSONAL_ACCESS_TOKEN=your_pat_here -- npx -y @m
 claude mcp add sequential-thinking -- npx -y @modelcontextprotocol/server-sequential-thinking
 
 # 5. Memory - Long-term memory across sessions (Recommended!)
-claude mcp add memory -e MEMORY_FILE_PATH="$PWD/memory/toryo_memory.jsonl" -- npx -y @modelcontextprotocol/server-memory
+claude mcp add memory -e MEMORY_FILE_PATH="$PWD/memory/daiku_memory.jsonl" -- npx -y @modelcontextprotocol/server-memory
 ```
 
 ### Verify Installation
@@ -642,9 +642,9 @@ language: en   # Japanese + English translation
 │                      FIRST-TIME SETUP (Run Once)                    │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  install.bat (Windows)                                              │
+│  koubou_install.bat (Windows)                                              │
 │      │                                                              │
-│      └──▶ first_setup.sh (via WSL)                                  │
+│      └──▶ koubou_junbi.sh (via WSL)                                  │
 │                │                                                    │
 │                ├── Check/Install tmux                               │
 │                ├── Check/Install Node.js v20+ (via nvm)             │
@@ -654,7 +654,7 @@ language: en   # Japanese + English translation
 │                      DAILY STARTUP (Run Every Day)                  │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  shutsujin_departure.sh                                             │
+│  koubou_hajime.sh                                             │
 │      │                                                              │
 │      ├──▶ Create tmux sessions                                      │
 │      │         • "toryo" session (1 pane)                          │
@@ -670,36 +670,36 @@ language: en   # Japanese + English translation
 </details>
 
 <details>
-<summary><b>shutsujin_departure.sh Options</b> (Click to expand)</summary>
+<summary><b>koubou_hajime.sh Options</b> (Click to expand)</summary>
 
 ```bash
 # Default: Launch with current directory as the target project
-cd ~/my-project && ~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
+cd ~/my-project && ~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh
 
 # Specify project directory with -p
-~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -p ~/my-project
+~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh -p ~/my-project
 
 # Session setup only (without launching Claude Code)
-./shutsujin_departure.sh -s
-./shutsujin_departure.sh --setup-only
+./koubou_hajime.sh -s
+./koubou_hajime.sh --setup-only
 
 # Full startup + open Windows Terminal tabs
-./shutsujin_departure.sh -t
-./shutsujin_departure.sh --terminal
+./koubou_hajime.sh -t
+./koubou_hajime.sh --terminal
 
 # Show help
-./shutsujin_departure.sh -h
-./shutsujin_departure.sh --help
+./koubou_hajime.sh -h
+./koubou_hajime.sh --help
 ```
 
 **Directory Variables:**
 
 | Variable | Meaning | Example |
 |----------|---------|---------|
-| `TORYO_HOME` | Tool installation directory | `~/tools/multi-agent-shogun-Fe-wind` |
+| `TORYO_HOME` | Tool installation directory | `~/tools/multi-agent-daiku-Fe-wind` |
 | `PROJECT_DIR` | Target project directory | `/home/user/my-app` |
 | `PROJECT_ID` | Resolved project identifier | `my-app` |
-| `DASHBOARD_PATH` | Active dashboard path | `~/tools/multi-agent-shogun-Fe-wind/dashboards/my-app/dashboard.md` |
+| `DASHBOARD_PATH` | Active dashboard path | `~/tools/multi-agent-daiku-Fe-wind/dashboards/my-app/dashboard.md` |
 
 System files (queue/, config/, instructions/, etc.) live in `TORYO_HOME`, while actual coding work happens in `PROJECT_DIR`.
 
@@ -711,13 +711,13 @@ System files (queue/, config/, instructions/, etc.) live in `TORYO_HOME`, while 
 **Normal Daily Usage:**
 ```bash
 cd ~/my-project
-~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh  # Start everything
+~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh  # Start everything
 tmux attach-session -t toryo                       # Connect to give commands
 ```
 
 **Debug Mode (manual control):**
 ```bash
-~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -s  # Create sessions only
+~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh -s  # Create sessions only
 
 # Manually start Claude Code on specific agents
 tmux send-keys -t toryo:0 'claude --dangerously-skip-permissions' Enter
@@ -732,7 +732,7 @@ tmux kill-session -t multiagent
 
 # Start fresh
 cd ~/my-project
-~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
+~/tools/multi-agent-daiku-Fe-wind/koubou_hajime.sh
 ```
 
 </details>
@@ -745,12 +745,12 @@ cd ~/my-project
 <summary><b>Click to expand file structure</b></summary>
 
 ```
-multi-agent-shogun/
+multi-agent-daiku/
 │
 │  ┌─────────────────── SETUP SCRIPTS ───────────────────┐
-├── install.bat               # Windows: First-time setup
-├── first_setup.sh            # Ubuntu/Mac: First-time setup
-├── shutsujin_departure.sh    # Daily startup (auto-loads instructions)
+├── koubou_install.bat               # Windows: First-time setup
+├── koubou_junbi.sh            # Ubuntu/Mac: First-time setup
+├── koubou_hajime.sh    # Daily startup (auto-loads instructions)
 │  └────────────────────────────────────────────────────┘
 │
 ├── instructions/             # Agent instruction files
@@ -771,7 +771,7 @@ multi-agent-shogun/
 ├── dashboards/               # Project dashboards
 │   └── {project_id}/
 │       └── dashboard.md
-├── dashboard.md              # Alias to active project dashboard (compat)
+├── dashboard.md              # Shortcut to active project dashboard
 └── CLAUDE.md                 # Project context for Claude
 ```
 

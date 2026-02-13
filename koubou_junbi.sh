@@ -1,11 +1,11 @@
 #!/bin/bash
 # ============================================================
-# first_setup.sh - multi-agent-shogun 初回セットアップスクリプト
+# koubou_junbi.sh - multi-agent-daiku 初回セットアップスクリプト
 # Ubuntu / WSL / Mac 用環境構築ツール
 # ============================================================
 # 実行方法:
-#   chmod +x first_setup.sh
-#   ./first_setup.sh
+#   chmod +x koubou_junbi.sh
+#   ./koubou_junbi.sh
 # ============================================================
 
 set -e
@@ -50,7 +50,7 @@ HAS_ERROR=false
 
 echo ""
 echo "  ╔══════════════════════════════════════════════════════════════╗"
-echo "  ║  🏯 multi-agent-shogun インストーラー                         ║"
+echo "  ║  🪚 multi-agent-daiku インストーラー                         ║"
 echo "  ║     Initial Setup Script for Ubuntu / WSL                    ║"
 echo "  ╚══════════════════════════════════════════════════════════════╝"
 echo ""
@@ -273,26 +273,26 @@ log_step "STEP 6: 設定ファイル確認"
 if [ ! -f "$SCRIPT_DIR/config/settings.yaml" ]; then
     log_info "config/settings.yaml を作成中..."
     cat > "$SCRIPT_DIR/config/settings.yaml" << 'EOF'
-# multi-agent-shogun 設定ファイル
+# multi-agent-daiku 設定ファイル
 
 # 言語設定
-# ja: 日本語（戦国風日本語のみ、併記なし）
-# en: 英語（戦国風日本語 + 英訳併記）
+# ja: 日本語（江戸職人口調日本語のみ、併記なし）
+# en: 英語（江戸職人口調日本語 + 英訳併記）
 # その他の言語コード（es, zh, ko, fr, de 等）も対応
 language: ja
 
 # スキル設定
 skill:
   # スキル保存先（生成されたスキルはここに保存）
-  save_path: "~/.claude/skills/toryo-generated/"
+  save_path: "~/.claude/skills/daiku-generated/"
 
   # ローカルスキル保存先（このプロジェクト専用）
-  local_path: "~/multi-agent-shogun/skills/"
+  local_path: "~/multi-agent-daiku/skills/"
 
 # ログ設定
 logging:
   level: info  # debug | info | warn | error
-  path: "~/multi-agent-shogun/logs/"
+  path: "~/multi-agent-daiku/logs/"
 EOF
     log_success "settings.yaml を作成しました"
 else
@@ -394,8 +394,8 @@ log_step "STEP 8: 実行権限設定"
 
 SCRIPTS=(
     "setup.sh"
-    "shutsujin_departure.sh"
-    "first_setup.sh"
+    "koubou_hajime.sh"
+    "koubou_junbi.sh"
 )
 
 for script in "${SCRIPTS[@]}"; do
@@ -446,16 +446,16 @@ echo "  ┌───────────────────────
 echo "  │  📜 次のステップ                                             │"
 echo "  └──────────────────────────────────────────────────────────────┘"
 echo ""
-echo "  出陣（全エージェント起動）:"
-echo "     ./shutsujin_departure.sh"
+echo "  作業開始（全エージェント起動）:"
+echo "     ./koubou_hajime.sh"
 echo ""
 echo "  オプション:"
-echo "     ./shutsujin_departure.sh -s   # セットアップのみ（Claude手動起動）"
-echo "     ./shutsujin_departure.sh -t   # Windows Terminalタブ展開"
+echo "     ./koubou_hajime.sh -s   # セットアップのみ（Claude手動起動）"
+echo "     ./koubou_hajime.sh -t   # Windows Terminalタブ展開"
 echo ""
 echo "  詳細は README.md を参照してください。"
 echo ""
 echo "  ════════════════════════════════════════════════════════════════"
-echo "   天下布武！ (Tenka Fubu!)"
+echo "   工房始動！ (Workshop ready!)"
 echo "  ════════════════════════════════════════════════════════════════"
 echo ""
