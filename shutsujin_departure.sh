@@ -4,30 +4,36 @@
 #
 # 使用方法:
 #   ./shutsujin_departure.sh           # 全エージェント起動（通常）
-#   ./shutsujin_departure.sh -s        # セットアップのみ（Claude起動なし）
+#   ./shutsujin_departure.sh -s        # セットアップのみ（エージェントCLI起動なし）
 #   ./shutsujin_departure.sh -h        # ヘルプ表示
 
 set -e
 
 # ディレクトリ変数の初期化
-# SHOGUN_HOME: ツール本体の場所（スクリプト自身のディレクトリ）
+# TORYO_HOME: ツール本体の場所（スクリプト自身のディレクトリ）
 # PROJECT_DIR: 作業対象プロジェクト（デフォルトは起動した場所）
-SHOGUN_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TORYO_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(pwd)"
 DASHBOARDS_DIR=""
 PROJECT_ID=""
 PROJECT_DASHBOARD_DIR=""
 DASHBOARD_PATH=""
-LEGACY_DASHBOARD_PATH="$SHOGUN_HOME/dashboard.md"
+LEGACY_DASHBOARD_PATH="$TORYO_HOME/dashboard.md"
+
+# エージェントCLI構成（デフォルト: 棟梁=Claude, 番頭/大工衆=Codex）
+AGENT_PROVIDER_TORYO="claude"
+AGENT_PROVIDER_BANTO="codex"
+AGENT_PROVIDER_DAIKUSHU="codex"
+AGENT_WAIT_SECONDS=15
 
 # 言語設定を読み取り（デフォルト: ja）
 LANG_SETTING="ja"
-if [ -f "$SHOGUN_HOME/config/settings.yaml" ]; then
-    LANG_SETTING=$(grep "^language:" "$SHOGUN_HOME/config/settings.yaml" 2>/dev/null | awk '{print $2}' || echo "ja")
+if [ -f "$TORYO_HOME/config/settings.yaml" ]; then
+    LANG_SETTING=$(grep "^language:" "$TORYO_HOME/config/settings.yaml" 2>/dev/null | awk '{print $2}' || echo "ja")
 fi
 
 resolve_project_id() {
-    local config_file="$SHOGUN_HOME/config/projects.yaml"
+    local config_file="$TORYO_HOME/config/projects.yaml"
     local resolved_id=""
 
     if [ -f "$config_file" ]; then
@@ -73,6 +79,103 @@ resolve_project_id() {
     fi
 }
 
+ensure_project_registered() {
+    local config_file="$TORYO_HOME/config/projects.yaml"
+    local project_name
+    local escaped_name
+    local escaped_path
+    local base_id
+    local candidate_id
+    local suffix=2
+
+    project_name="$(basename "$PROJECT_DIR")"
+    escaped_name=$(printf "%s" "$project_name" | sed 's/"/\\"/g')
+    escaped_path=$(printf "%s" "$PROJECT_DIR" | sed 's/"/\\"/g')
+
+    if [ ! -f "$config_file" ]; then
+        cat > "$config_file" << 'EOF'
+projects:
+EOF
+    fi
+
+    if ! grep -q '^projects:' "$config_file"; then
+        local tmp_file
+        tmp_file=$(mktemp)
+        {
+            echo "projects:"
+            cat "$config_file"
+        } > "$tmp_file"
+        mv "$tmp_file" "$config_file"
+    fi
+
+    if awk -v target="$PROJECT_DIR" '
+        function clean(v) {
+            gsub(/^[ \t"\047]+|[ \t"\047]+$/, "", v)
+            return v
+        }
+
+        /^[[:space:]]*path:[[:space:]]*/ {
+            line = $0
+            sub(/^[[:space:]]*path:[[:space:]]*/, "", line)
+            path_value = clean(line)
+            if (path_value == target) {
+                found = 1
+                exit
+            }
+        }
+
+        END { if (found == 1) exit 0; exit 1 }
+    ' "$config_file"; then
+        return
+    fi
+
+    base_id="$PROJECT_ID"
+    candidate_id="$base_id"
+
+    while awk -v target="$candidate_id" '
+        function clean(v) {
+            gsub(/^[ \t"\047]+|[ \t"\047]+$/, "", v)
+            return v
+        }
+
+        /^[[:space:]]*-[[:space:]]id:[[:space:]]*/ {
+            line = $0
+            sub(/^[[:space:]]*-[[:space:]]id:[[:space:]]*/, "", line)
+            if (clean(line) == target) {
+                found = 1
+                exit
+            }
+        }
+
+        /^[[:space:]]*id:[[:space:]]*/ {
+            line = $0
+            sub(/^[[:space:]]*id:[[:space:]]*/, "", line)
+            if (clean(line) == target) {
+                found = 1
+                exit
+            }
+        }
+
+        END { if (found == 1) exit 0; exit 1 }
+    ' "$config_file"; do
+        candidate_id="${base_id}-${suffix}"
+        suffix=$((suffix + 1))
+    done
+
+    PROJECT_ID="$candidate_id"
+
+    cat >> "$config_file" << EOF
+
+  - id: $PROJECT_ID
+    name: "$escaped_name"
+    path: "$escaped_path"
+    priority: medium
+    status: active
+EOF
+
+    log_info "📌 projects.yaml に自動登録: id=$PROJECT_ID"
+}
+
 # 色付きログ関数（戦国風）
 log_info() {
     echo -e "\033[1;33m【報】\033[0m $1"
@@ -84,6 +187,150 @@ log_success() {
 
 log_war() {
     echo -e "\033[1;31m【戦】\033[0m $1"
+}
+
+escape_single_quotes() {
+    printf "%s" "$1" | sed "s/'/'\\\\''/g"
+}
+
+prompt_provider_for_role() {
+    local role_name="$1"
+    local default_provider="$2"
+    local choice=""
+
+    while true; do
+        echo ""
+        echo "    $role_name のCLIを選択せよ (default: $default_provider)"
+        echo "      1) claude"
+        echo "      2) codex"
+        read -r -p "      > " choice
+
+        case "$choice" in
+            "")
+                REPLY_PROVIDER="$default_provider"
+                return
+                ;;
+            1|claude|CLAUDE|Claude)
+                REPLY_PROVIDER="claude"
+                return
+                ;;
+            2|codex|CODEX|Codex)
+                REPLY_PROVIDER="codex"
+                return
+                ;;
+            *)
+                echo "      入力エラー: 1 または 2 を入力せよ"
+                ;;
+        esac
+    done
+}
+
+select_agent_runtime_profile() {
+    local profile=""
+
+    if [ "$SETUP_ONLY" = true ]; then
+        return
+    fi
+
+    if [ ! -t 0 ]; then
+        log_info "🧭 非対話環境のため既定構成を使用: 棟梁=claude / 番頭=codex / 大工衆=codex"
+        return
+    fi
+
+    echo "  ┌──────────────────────────────────────────────────────────┐"
+    echo "  │  🧠 エージェントCLI構成を選択                            │"
+    echo "  └──────────────────────────────────────────────────────────┘"
+    echo "    1) 推奨: 棟梁=claude / 番頭=codex / 大工衆=codex"
+    echo "    2) 全員 claude"
+    echo "    3) 全員 codex"
+    echo "    4) カスタム（棟梁/番頭/大工衆を個別選択）"
+
+    while true; do
+        read -r -p "    選択 [1-4] (default: 1): " profile
+        case "$profile" in
+            ""|1)
+                AGENT_PROVIDER_TORYO="claude"
+                AGENT_PROVIDER_BANTO="codex"
+                AGENT_PROVIDER_DAIKUSHU="codex"
+                break
+                ;;
+            2)
+                AGENT_PROVIDER_TORYO="claude"
+                AGENT_PROVIDER_BANTO="claude"
+                AGENT_PROVIDER_DAIKUSHU="claude"
+                break
+                ;;
+            3)
+                AGENT_PROVIDER_TORYO="codex"
+                AGENT_PROVIDER_BANTO="codex"
+                AGENT_PROVIDER_DAIKUSHU="codex"
+                break
+                ;;
+            4)
+                prompt_provider_for_role "棟梁 (Toryo)" "$AGENT_PROVIDER_TORYO"
+                AGENT_PROVIDER_TORYO="$REPLY_PROVIDER"
+                prompt_provider_for_role "番頭 (Banto)" "$AGENT_PROVIDER_BANTO"
+                AGENT_PROVIDER_BANTO="$REPLY_PROVIDER"
+                prompt_provider_for_role "大工衆 (Daikushu)" "$AGENT_PROVIDER_DAIKUSHU"
+                AGENT_PROVIDER_DAIKUSHU="$REPLY_PROVIDER"
+                break
+                ;;
+            *)
+                echo "    入力エラー: 1-4 を入力せよ"
+                ;;
+        esac
+    done
+
+    log_success "🛠️ CLI構成: 棟梁=$AGENT_PROVIDER_TORYO / 番頭=$AGENT_PROVIDER_BANTO / 大工衆=$AGENT_PROVIDER_DAIKUSHU"
+    echo ""
+}
+
+ensure_selected_cli_available() {
+    local provider
+    declare -A checked
+
+    for provider in "$AGENT_PROVIDER_TORYO" "$AGENT_PROVIDER_BANTO" "$AGENT_PROVIDER_DAIKUSHU"; do
+        if [ -z "${checked[$provider]+x}" ]; then
+            if ! command -v "$provider" >/dev/null 2>&1; then
+                echo "エラー: '$provider' が見つかりません。PATHを確認してください。"
+                exit 1
+            fi
+            checked[$provider]=1
+        fi
+    done
+}
+
+build_agent_launch_command() {
+    local role="$1"
+    local provider="$2"
+    local prompt_text="$3"
+    local escaped_prompt=""
+    local role_prefix=""
+
+    if [ "$provider" = "claude" ]; then
+        escaped_prompt=$(escape_single_quotes "$prompt_text")
+        if [ "$role" = "toryo" ]; then
+            echo "MAX_THINKING_TOKENS=0 claude --model opus --dangerously-skip-permissions --append-system-prompt '$escaped_prompt'"
+        else
+            echo "claude --dangerously-skip-permissions --append-system-prompt '$escaped_prompt'"
+        fi
+        return
+    fi
+
+    if [ "$provider" = "codex" ]; then
+        case "$role" in
+            toryo) role_prefix="棟梁として行動せよ。" ;;
+            banto) role_prefix="番頭として行動せよ。" ;;
+            daikushu) role_prefix="大工衆として行動せよ。" ;;
+            *) role_prefix="与えられた役割に従って行動せよ。" ;;
+        esac
+        escaped_prompt=$(escape_single_quotes "$role_prefix $prompt_text")
+        echo "codex --dangerously-bypass-approvals-and-sandbox '$escaped_prompt'"
+        return
+    fi
+
+    echo "エラー: 未対応の provider '$provider'" >&2
+    exit 1
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -113,23 +360,23 @@ while [[ $# -gt 0 ]]; do
             echo "使用方法: shutsujin_departure.sh [オプション]"
             echo ""
             echo "オプション:"
-            echo "  -s, --setup-only   tmuxセッションのセットアップのみ（Claude起動なし）"
+            echo "  -s, --setup-only   tmuxセッションのセットアップのみ（エージェントCLI起動なし）"
             echo "  -t, --terminal     Windows Terminal で新しいタブを開く"
             echo "  -p, --project DIR  作業対象プロジェクトディレクトリを指定（デフォルト: カレントディレクトリ）"
             echo "  -h, --help         このヘルプを表示"
             echo ""
             echo "例:"
-            echo "  cd /home/user/my-app && $SHOGUN_HOME/shutsujin_departure.sh"
-            echo "  $SHOGUN_HOME/shutsujin_departure.sh -p /home/user/my-app"
-            echo "  ./shutsujin_departure.sh -s   # セットアップのみ（手動でClaude起動）"
+            echo "  cd /home/user/my-app && $TORYO_HOME/shutsujin_departure.sh"
+            echo "  $TORYO_HOME/shutsujin_departure.sh -p /home/user/my-app"
+            echo "  ./shutsujin_departure.sh -s   # セットアップのみ（手動でエージェントCLI起動）"
             echo "  ./shutsujin_departure.sh -t   # 全エージェント起動 + ターミナルタブ展開"
             echo ""
             echo "ディレクトリ:"
-            echo "  SHOGUN_HOME  ツール本体の場所（スクリプトのディレクトリ）"
+            echo "  TORYO_HOME  ツール本体の場所（スクリプトのディレクトリ）"
             echo "  PROJECT_DIR  作業対象プロジェクト（-p で指定、またはカレントディレクトリ）"
             echo ""
             echo "エイリアス:"
-            echo "  css   → tmux attach-session -t shogun"
+            echo "  css   → tmux attach-session -t toryo"
             echo "  csm   → tmux attach-session -t multiagent"
             echo ""
             exit 0
@@ -143,7 +390,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 resolve_project_id
-DASHBOARDS_DIR="$SHOGUN_HOME/dashboards"
+ensure_project_registered
+DASHBOARDS_DIR="$TORYO_HOME/dashboards"
 PROJECT_DASHBOARD_DIR="$DASHBOARDS_DIR/$PROJECT_ID"
 DASHBOARD_PATH="$PROJECT_DASHBOARD_DIR/dashboard.md"
 
@@ -173,13 +421,13 @@ show_battle_cry() {
     echo ""
 
     # ═══════════════════════════════════════════════════════════════════════════
-    # 足軽隊列（オリジナル）
+    # 大工衆隊列（オリジナル）
     # ═══════════════════════════════════════════════════════════════════════════
     echo -e "\033[1;34m  ╔═════════════════════════════════════════════════════════════════════════════╗\033[0m"
     echo -e "\033[1;34m  ║\033[0m                    \033[1;37m【 足 軽 隊 列 ・ 八 名 配 備 】\033[0m                      \033[1;34m║\033[0m"
     echo -e "\033[1;34m  ╚═════════════════════════════════════════════════════════════════════════════╝\033[0m"
 
-    cat << 'ASHIGARU_EOF'
+    cat << 'DAIKUSHU_EOF'
 
        /\      /\      /\      /\      /\      /\      /\      /\
       /||\    /||\    /||\    /||\    /||\    /||\    /||\    /||\
@@ -187,9 +435,9 @@ show_battle_cry() {
        ||      ||      ||      ||      ||      ||      ||      ||
       /||\    /||\    /||\    /||\    /||\    /||\    /||\    /||\
       /  \    /  \    /  \    /  \    /  \    /  \    /  \    /  \
-     [足1]   [足2]   [足3]   [足4]   [足5]   [足6]   [足7]   [足8]
+     [工1]   [工2]   [工3]   [工4]   [工5]   [工6]   [工7]   [工8]
 
-ASHIGARU_EOF
+DAIKUSHU_EOF
 
     echo -e "                    \033[1;36m「「「 はっ！！ 出陣いたす！！ 」」」\033[0m"
     echo ""
@@ -198,11 +446,11 @@ ASHIGARU_EOF
     # システム情報
     # ═══════════════════════════════════════════════════════════════════════════
     echo -e "\033[1;33m  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\033[0m"
-    echo -e "\033[1;33m  ┃\033[0m  \033[1;37m🏯 multi-agent-shogun\033[0m  〜 \033[1;36m戦国マルチエージェント統率システム\033[0m 〜           \033[1;33m┃\033[0m"
+    echo -e "\033[1;33m  ┃\033[0m  \033[1;37m🏯 multi-agent-shogun\033[0m  〜 \033[1;36m大工マルチエージェント統率システム\033[0m 〜           \033[1;33m┃\033[0m"
     echo -e "\033[1;33m  ┃\033[0m                                                                           \033[1;33m┃\033[0m"
-    echo -e "\033[1;33m  ┃\033[0m    \033[1;35m将軍\033[0m: プロジェクト統括    \033[1;31m家老\033[0m: タスク管理    \033[1;34m足軽\033[0m: 実働部隊×8      \033[1;33m┃\033[0m"
+    echo -e "\033[1;33m  ┃\033[0m    \033[1;35m棟梁\033[0m: プロジェクト統括    \033[1;31m番頭\033[0m: タスク管理    \033[1;34m大工衆\033[0m: 実働部隊×8      \033[1;33m┃\033[0m"
     echo -e "\033[1;33m  ┃\033[0m                                                                           \033[1;33m┃\033[0m"
-    echo -e "\033[1;33m  ┃\033[0m     📁 SHOGUN_HOME: \033[1;36m$SHOGUN_HOME\033[0m"
+    echo -e "\033[1;33m  ┃\033[0m     📁 TORYO_HOME: \033[1;36m$TORYO_HOME\033[0m"
     echo -e "\033[1;33m  ┃\033[0m     📁 PROJECT_DIR: \033[1;36m$PROJECT_DIR\033[0m"
     echo -e "\033[1;33m  ┃\033[0m     🏷️ PROJECT_ID: \033[1;36m$PROJECT_ID\033[0m"
     echo -e "\033[1;33m  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\033[0m"
@@ -215,20 +463,25 @@ show_battle_cry
 echo -e "  \033[1;33m天下布武！陣立てを開始いたす\033[0m (Setting up the battlefield)"
 echo ""
 
+select_agent_runtime_profile
+if [ "$SETUP_ONLY" = false ]; then
+    ensure_selected_cli_available
+fi
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # STEP 1: 既存セッションクリーンアップ
 # ═══════════════════════════════════════════════════════════════════════════════
 log_info "🧹 既存の陣を撤収中..."
 tmux kill-session -t multiagent 2>/dev/null && log_info "  └─ multiagent陣、撤収完了" || log_info "  └─ multiagent陣は存在せず"
-tmux kill-session -t shogun 2>/dev/null && log_info "  └─ shogun本陣、撤収完了" || log_info "  └─ shogun本陣は存在せず"
+tmux kill-session -t toryo 2>/dev/null && log_info "  └─ toryo本陣、撤収完了" || log_info "  └─ toryo本陣は存在せず"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # STEP 2: 報告ファイルリセット
 # ═══════════════════════════════════════════════════════════════════════════════
 log_info "📜 前回の軍議記録を破棄中..."
 for i in {1..8}; do
-    cat > "$SHOGUN_HOME/queue/reports/ashigaru${i}_report.yaml" << EOF
-worker_id: ashigaru${i}
+    cat > "$TORYO_HOME/queue/reports/daikushu${i}_report.yaml" << EOF
+worker_id: daikushu${i}
 task_id: null
 timestamp: ""
 status: idle
@@ -237,52 +490,52 @@ EOF
 done
 
 # キューファイルリセット
-cat > "$SHOGUN_HOME/queue/shogun_to_karo.yaml" << 'EOF'
+cat > "$TORYO_HOME/queue/toryo_to_banto.yaml" << 'EOF'
 queue: []
 EOF
 
-cat > "$SHOGUN_HOME/queue/karo_to_shogun.yaml" << 'EOF'
+cat > "$TORYO_HOME/queue/banto_to_toryo.yaml" << 'EOF'
 notifications: []
 EOF
 
-cat > "$SHOGUN_HOME/queue/karo_to_ashigaru.yaml" << 'EOF'
+cat > "$TORYO_HOME/queue/banto_to_daikushu.yaml" << 'EOF'
 assignments:
-  ashigaru1:
+  daikushu1:
     task_id: null
     description: null
     target_path: null
     status: idle
-  ashigaru2:
+  daikushu2:
     task_id: null
     description: null
     target_path: null
     status: idle
-  ashigaru3:
+  daikushu3:
     task_id: null
     description: null
     target_path: null
     status: idle
-  ashigaru4:
+  daikushu4:
     task_id: null
     description: null
     target_path: null
     status: idle
-  ashigaru5:
+  daikushu5:
     task_id: null
     description: null
     target_path: null
     status: idle
-  ashigaru6:
+  daikushu6:
     task_id: null
     description: null
     target_path: null
     status: idle
-  ashigaru7:
+  daikushu7:
     task_id: null
     description: null
     target_path: null
     status: idle
-  ashigaru8:
+  daikushu8:
     task_id: null
     description: null
     target_path: null
@@ -371,9 +624,9 @@ log_success "  └─ ダッシュボード初期化完了 (言語: $LANG_SETTIN
 echo ""
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# STEP 4: multiagentセッション作成（9ペイン：karo + ashigaru1-8）
+# STEP 4: multiagentセッション作成（9ペイン：banto + daikushu1-8）
 # ═══════════════════════════════════════════════════════════════════════════════
-log_war "⚔️ 家老・足軽の陣を構築中（9名配備）..."
+log_war "⚔️ 番頭・大工衆の陣を構築中（9名配備）..."
 
 # 最初のペイン作成
 tmux new-session -d -s multiagent -n "agents"
@@ -396,54 +649,62 @@ tmux split-window -v -t "multiagent:0.7"
 
 tmux select-layout -t "multiagent:0" tiled
 
-# ペインタイトル設定（0: karo, 1-8: ashigaru1-8）
-PANE_TITLES=("karo" "ashigaru1" "ashigaru2" "ashigaru3" "ashigaru4" "ashigaru5" "ashigaru6" "ashigaru7" "ashigaru8")
-PANE_COLORS=("1;31" "1;34" "1;34" "1;34" "1;34" "1;34" "1;34" "1;34" "1;34")  # karo: 赤, ashigaru: 青
+# ペインタイトル設定（0: banto, 1-8: daikushu1-8）
+PANE_TITLES=("banto" "daikushu1" "daikushu2" "daikushu3" "daikushu4" "daikushu5" "daikushu6" "daikushu7" "daikushu8")
+PANE_COLORS=("1;31" "1;34" "1;34" "1;34" "1;34" "1;34" "1;34" "1;34" "1;34")  # banto: 赤, daikushu: 青
 
 for i in {0..8}; do
     tmux select-pane -t "multiagent:0.$i" -T "${PANE_TITLES[$i]}"
-    tmux send-keys -t "multiagent:0.$i" "cd \"$PROJECT_DIR\" && export SHOGUN_HOME=\"$SHOGUN_HOME\" && export PROJECT_DIR=\"$PROJECT_DIR\" && export PROJECT_ID=\"$PROJECT_ID\" && export DASHBOARD_PATH=\"$DASHBOARD_PATH\" && export PS1='(\[\033[${PANE_COLORS[$i]}m\]${PANE_TITLES[$i]}\[\033[0m\]) \[\033[1;32m\]\w\[\033[0m\]\$ ' && clear" Enter
+    tmux send-keys -t "multiagent:0.$i" "cd \"$PROJECT_DIR\" && export TORYO_HOME=\"$TORYO_HOME\" && export PROJECT_DIR=\"$PROJECT_DIR\" && export PROJECT_ID=\"$PROJECT_ID\" && export DASHBOARD_PATH=\"$DASHBOARD_PATH\" && export PS1='(\[\033[${PANE_COLORS[$i]}m\]${PANE_TITLES[$i]}\[\033[0m\]) \[\033[1;32m\]\w\[\033[0m\]\$ ' && clear" Enter
 done
 
-log_success "  └─ 家老・足軽の陣、構築完了"
+log_success "  └─ 番頭・大工衆の陣、構築完了"
 echo ""
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# STEP 5: shogunセッション作成（1ペイン）
+# STEP 5: toryoセッション作成（1ペイン）
 # ═══════════════════════════════════════════════════════════════════════════════
-log_war "👑 将軍の本陣を構築中..."
-tmux new-session -d -s shogun
-tmux send-keys -t shogun "cd \"$PROJECT_DIR\" && export SHOGUN_HOME=\"$SHOGUN_HOME\" && export PROJECT_DIR=\"$PROJECT_DIR\" && export PROJECT_ID=\"$PROJECT_ID\" && export DASHBOARD_PATH=\"$DASHBOARD_PATH\" && export PS1='(\[\033[1;35m\]将軍\[\033[0m\]) \[\033[1;32m\]\w\[\033[0m\]\$ ' && clear" Enter
-tmux select-pane -t shogun:0.0 -P 'bg=#002b36'  # 将軍の Solarized Dark
+log_war "👑 棟梁の本陣を構築中..."
+tmux new-session -d -s toryo
+tmux send-keys -t toryo "cd \"$PROJECT_DIR\" && export TORYO_HOME=\"$TORYO_HOME\" && export PROJECT_DIR=\"$PROJECT_DIR\" && export PROJECT_ID=\"$PROJECT_ID\" && export DASHBOARD_PATH=\"$DASHBOARD_PATH\" && export PS1='(\[\033[1;35m\]棟梁\[\033[0m\]) \[\033[1;32m\]\w\[\033[0m\]\$ ' && clear" Enter
+tmux select-pane -t toryo:0.0 -P 'bg=#002b36'  # 棟梁の Solarized Dark
 
-log_success "  └─ 将軍の本陣、構築完了"
+log_success "  └─ 棟梁の本陣、構築完了"
 echo ""
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# STEP 6: Claude Code 起動（--setup-only でスキップ）
+# STEP 6: エージェントCLI起動（--setup-only でスキップ）
 # ═══════════════════════════════════════════════════════════════════════════════
 if [ "$SETUP_ONLY" = false ]; then
-    log_war "👑 全軍に Claude Code を召喚中..."
+    log_war "👑 全軍にエージェントCLIを召喚中..."
 
     # エージェントに注入するパス情報プロンプト
-    SHOGUN_PROMPT="SHOGUN_HOME=$SHOGUN_HOME に shogun システムファイル(queue/,config/,instructions/,status/)がある。PROJECT_DIR=$PROJECT_DIR が作業対象プロジェクト。PROJECT_ID=$PROJECT_ID。ダッシュボード実体は DASHBOARD_PATH=$DASHBOARD_PATH。互換パスとして $LEGACY_DASHBOARD_PATH も存在するが、更新時は必ず \$DASHBOARD_PATH を使え。"
+    TORYO_PROMPT="TORYO_HOME=$TORYO_HOME に toryo システムファイル(queue/,config/,instructions/,status/)がある。PROJECT_DIR=$PROJECT_DIR が作業対象プロジェクト。PROJECT_ID=$PROJECT_ID。ダッシュボード実体は DASHBOARD_PATH=$DASHBOARD_PATH。互換パスとして $LEGACY_DASHBOARD_PATH も存在するが、更新時は必ず \$DASHBOARD_PATH を使え。"
+    TORYO_LAUNCH_CMD=$(build_agent_launch_command "toryo" "$AGENT_PROVIDER_TORYO" "$TORYO_PROMPT")
+    BANTO_LAUNCH_CMD=$(build_agent_launch_command "banto" "$AGENT_PROVIDER_BANTO" "$TORYO_PROMPT")
+    DAIKUSHU_LAUNCH_CMD=$(build_agent_launch_command "daikushu" "$AGENT_PROVIDER_DAIKUSHU" "$TORYO_PROMPT")
 
-    # 将軍
-    tmux send-keys -t shogun "MAX_THINKING_TOKENS=0 claude --model opus --dangerously-skip-permissions --append-system-prompt '$SHOGUN_PROMPT'"
-    tmux send-keys -t shogun Enter
-    log_info "  └─ 将軍、召喚完了"
+    # 棟梁
+    tmux send-keys -t toryo "$TORYO_LAUNCH_CMD"
+    tmux send-keys -t toryo Enter
+    log_info "  └─ 棟梁、召喚完了 (CLI: $AGENT_PROVIDER_TORYO)"
 
     # 少し待機（安定のため）
     sleep 1
 
-    # 家老 + 足軽（9ペイン）
-    for i in {0..8}; do
-        tmux send-keys -t "multiagent:0.$i" "claude --dangerously-skip-permissions --append-system-prompt '$SHOGUN_PROMPT'"
+    # 番頭
+    tmux send-keys -t "multiagent:0.0" "$BANTO_LAUNCH_CMD"
+    tmux send-keys -t "multiagent:0.0" Enter
+    log_info "  └─ 番頭、召喚完了 (CLI: $AGENT_PROVIDER_BANTO)"
+
+    # 大工衆（1-8）
+    for i in {1..8}; do
+        tmux send-keys -t "multiagent:0.$i" "$DAIKUSHU_LAUNCH_CMD"
         tmux send-keys -t "multiagent:0.$i" Enter
     done
-    log_info "  └─ 家老・足軽、召喚完了"
+    log_info "  └─ 大工衆隊、召喚完了 (CLI: $AGENT_PROVIDER_DAIKUSHU)"
 
-    log_success "✅ 全軍 Claude Code 起動完了"
+    log_success "✅ 全軍エージェントCLI起動完了"
     echo ""
 
     # ═══════════════════════════════════════════════════════════════════════════
@@ -517,27 +778,27 @@ NINJA_EOF
     echo -e "                               \033[0;36m[ASCII Art: syntax-samurai/ryu - CC0 1.0 Public Domain]\033[0m"
     echo ""
 
-    echo "  Claude Code の起動を待機中（15秒）..."
-    sleep 15
+    echo "  エージェントCLIの起動を待機中（${AGENT_WAIT_SECONDS}秒）..."
+    sleep "$AGENT_WAIT_SECONDS"
 
-    # 将軍に指示書を読み込ませる
-    log_info "  └─ 将軍に指示書を伝達中..."
-    tmux send-keys -t shogun "$SHOGUN_HOME/instructions/shogun.md を読んで役割を理解せよ。"
+    # 棟梁に指示書を読み込ませる
+    log_info "  └─ 棟梁に指示書を伝達中..."
+    tmux send-keys -t toryo "$TORYO_HOME/instructions/toryo.md を読んで役割を理解せよ。"
     sleep 0.5
-    tmux send-keys -t shogun Enter
+    tmux send-keys -t toryo Enter
 
-    # 家老に指示書を読み込ませる
+    # 番頭に指示書を読み込ませる
     sleep 2
-    log_info "  └─ 家老に指示書を伝達中..."
-    tmux send-keys -t "multiagent:0.0" "$SHOGUN_HOME/instructions/karo.md を読んで役割を理解せよ。"
+    log_info "  └─ 番頭に指示書を伝達中..."
+    tmux send-keys -t "multiagent:0.0" "$TORYO_HOME/instructions/banto.md を読んで役割を理解せよ。"
     sleep 0.5
     tmux send-keys -t "multiagent:0.0" Enter
 
-    # 足軽に指示書を読み込ませる（1-8）
+    # 大工衆に指示書を読み込ませる（1-8）
     sleep 2
-    log_info "  └─ 足軽に指示書を伝達中..."
+    log_info "  └─ 大工衆に指示書を伝達中..."
     for i in {1..8}; do
-        tmux send-keys -t "multiagent:0.$i" "$SHOGUN_HOME/instructions/ashigaru.md を読んで役割を理解せよ。汝は足軽${i}号である。"
+        tmux send-keys -t "multiagent:0.$i" "$TORYO_HOME/instructions/daikushu.md を読んで役割を理解せよ。汝は大工衆${i}号である。"
         sleep 0.3
         tmux send-keys -t "multiagent:0.$i" Enter
         sleep 0.5
@@ -561,21 +822,21 @@ echo "  ┌───────────────────────
 echo "  │  📋 布陣図 (Formation)                                   │"
 echo "  └──────────────────────────────────────────────────────────┘"
 echo ""
-echo "     【shogunセッション】将軍の本陣"
+echo "     【toryoセッション】棟梁の本陣"
 echo "     ┌─────────────────────────────┐"
-echo "     │  Pane 0: 将軍 (SHOGUN)      │  ← 総大将・プロジェクト統括"
+echo "     │  Pane 0: 棟梁 (TORYO)      │  ← 総大将・プロジェクト統括"
 echo "     └─────────────────────────────┘"
 echo ""
-echo "     【multiagentセッション】家老・足軽の陣（3x3 = 9ペイン）"
+echo "     【multiagentセッション】番頭・大工衆の陣（3x3 = 9ペイン）"
 echo "     ┌─────────┬─────────┬─────────┐"
-echo "     │  karo   │ashigaru3│ashigaru6│"
-echo "     │  (家老) │ (足軽3) │ (足軽6) │"
+echo "     │  banto   │daikushu3│daikushu6│"
+echo "     │  (番頭) │ (大工衆3) │ (大工衆6) │"
 echo "     ├─────────┼─────────┼─────────┤"
-echo "     │ashigaru1│ashigaru4│ashigaru7│"
-echo "     │ (足軽1) │ (足軽4) │ (足軽7) │"
+echo "     │daikushu1│daikushu4│daikushu7│"
+echo "     │ (大工衆1) │ (大工衆4) │ (大工衆7) │"
 echo "     ├─────────┼─────────┼─────────┤"
-echo "     │ashigaru2│ashigaru5│ashigaru8│"
-echo "     │ (足軽2) │ (足軽5) │ (足軽8) │"
+echo "     │daikushu2│daikushu5│daikushu8│"
+echo "     │ (大工衆2) │ (大工衆5) │ (大工衆8) │"
 echo "     └─────────┴─────────┴─────────┘"
 echo ""
 
@@ -586,32 +847,33 @@ echo "  ╚═══════════════════════
 echo ""
 
 if [ "$SETUP_ONLY" = true ]; then
-    echo "  ⚠️  セットアップのみモード: Claude Codeは未起動です"
+    echo "  ⚠️  セットアップのみモード: エージェントCLIは未起動です"
     echo ""
-    echo "  手動でClaude Codeを起動するには:"
+    echo "  手動でエージェントCLIを起動するには:"
     echo "  ┌──────────────────────────────────────────────────────────┐"
-    echo "  │  # 将軍を召喚                                            │"
-    echo "  │  tmux send-keys -t shogun 'claude --dangerously-skip-permissions' Enter │"
+    echo "  │  # 棟梁（Claudeの例 / 2ステップ）                         │"
+    echo "  │  tmux send-keys -t toryo 'claude --dangerously-skip-permissions' │"
+    echo "  │  tmux send-keys -t toryo Enter                          │"
     echo "  │                                                          │"
-    echo "  │  # 家老・足軽を一斉召喚                                   │"
-    echo "  │  for i in {0..8}; do \\                                   │"
-    echo "  │    tmux send-keys -t multiagent:0.\$i \\                   │"
-    echo "  │      'claude --dangerously-skip-permissions' Enter       │"
-    echo "  │  done                                                    │"
+    echo "  │  # 番頭（Codexの例 / 2ステップ）                          │"
+    echo "  │  tmux send-keys -t multiagent:0.0 'codex --dangerously-bypass-approvals-and-sandbox \"起動\"' │"
+    echo "  │  tmux send-keys -t multiagent:0.0 Enter                  │"
+    echo "  │                                                          │"
+    echo "  │  # 大工衆は multiagent:0.1〜0.8 に同様に送る               │"
     echo "  └──────────────────────────────────────────────────────────┘"
     echo ""
 fi
 
 echo "  次のステップ:"
 echo "  ┌──────────────────────────────────────────────────────────┐"
-echo "  │  将軍の本陣にアタッチして命令を開始:                      │"
-echo "  │     tmux attach-session -t shogun   (または: css)        │"
+echo "  │  棟梁の本陣にアタッチして命令を開始:                      │"
+echo "  │     tmux attach-session -t toryo   (または: css)        │"
 echo "  │                                                          │"
-echo "  │  家老・足軽の陣を確認する:                                │"
+echo "  │  番頭・大工衆の陣を確認する:                                │"
 echo "  │     tmux attach-session -t multiagent   (または: csm)    │"
 echo "  │                                                          │"
 echo "  │  tmux内から切替える場合:                                  │"
-echo "  │     tmux switch-client -t shogun / multiagent           │"
+echo "  │     tmux switch-client -t toryo / multiagent           │"
 echo "  │                                                          │"
 echo "  │  ※ 各エージェントは指示書を読み込み済み。                 │"
 echo "  │    すぐに命令を開始できます。                             │"
@@ -630,7 +892,7 @@ if [ "$OPEN_TERMINAL" = true ]; then
 
     # Windows Terminal が利用可能か確認
     if command -v wt.exe &> /dev/null; then
-        wt.exe -w 0 new-tab wsl.exe -e bash -c "tmux attach-session -t shogun" \; new-tab wsl.exe -e bash -c "tmux attach-session -t multiagent"
+        wt.exe -w 0 new-tab wsl.exe -e bash -c "tmux attach-session -t toryo" \; new-tab wsl.exe -e bash -c "tmux attach-session -t multiagent"
         log_success "  └─ ターミナルタブ展開完了"
     else
         log_info "  └─ wt.exe が見つかりません。手動でアタッチしてください。"

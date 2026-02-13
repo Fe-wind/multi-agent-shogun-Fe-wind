@@ -5,15 +5,15 @@
 
 ## 概要
 multi-agent-shogunは、Claude Code + tmux を使ったマルチエージェント並列開発基盤である。
-戦国時代の軍制をモチーフとした階層構造で、複数のプロジェクトを並行管理できる。
+棟梁中心の工房体制をモチーフとした階層構造で、複数のプロジェクトを並行管理できる。
 
 ## 環境変数
 
-- `$SHOGUN_HOME` - shogunシステムのディレクトリ（queue/, config/, instructions/ 等）
+- `$TORYO_HOME` - toryoシステムのディレクトリ（queue/, config/, instructions/ 等）
 - `$PROJECT_DIR` - 作業対象プロジェクトのディレクトリ
-- `$DASHBOARD_PATH` - 現在のプロジェクト用ダッシュボード（`$SHOGUN_HOME/dashboards/{project_id}/dashboard.md`）
+- `$DASHBOARD_PATH` - 現在のプロジェクト用ダッシュボード（`$TORYO_HOME/dashboards/{project_id}/dashboard.md`）
 
-`$SHOGUN_HOME == $PROJECT_DIR` のとき = 従来モード（後方互換）。
+`$TORYO_HOME == $PROJECT_DIR` のとき = 従来モード（後方互換）。
 
 ## コンパクション復帰時（全エージェント必須）
 
@@ -21,9 +21,9 @@ multi-agent-shogunは、Claude Code + tmux を使ったマルチエージェン�
 
 1. **自分のpane名を確認**: `tmux display-message -p '#W'`
 2. **対応する instructions を読む**:
-   - shogun → `$SHOGUN_HOME/instructions/shogun.md`
-   - karo (multiagent:0.0) → `$SHOGUN_HOME/instructions/karo.md`
-   - ashigaru (multiagent:0.1-8) → `$SHOGUN_HOME/instructions/ashigaru.md`
+   - toryo → `$TORYO_HOME/instructions/toryo.md`
+   - banto (multiagent:0.0) → `$TORYO_HOME/instructions/banto.md`
+   - daikushu (multiagent:0.1-8) → `$TORYO_HOME/instructions/daikushu.md`
 3. **禁止事項を確認してから作業開始**
 
 summaryの「次のステップ」を見てすぐ作業してはならぬ。まず自分が誰かを確認せよ。
@@ -35,19 +35,19 @@ summaryの「次のステップ」を見てすぐ作業してはならぬ。ま�
   │
   ▼ 指示
 ┌──────────────┐
-│   SHOGUN     │ ← 将軍（プロジェクト統括）
-│   (将軍)     │
+│   TORYO     │ ← 棟梁（プロジェクト統括）
+│   (棟梁)     │
 └──────┬───────┘
        │ YAMLファイル経由
        ▼
 ┌──────────────┐
-│    KARO      │ ← 家老（タスク管理・分配）
-│   (家老)     │
+│    BANTO      │ ← 番頭（タスク管理・分配）
+│   (番頭)     │
 └──────┬───────┘
        │ YAMLファイル経由
        ▼
 ┌───┬───┬───┬───┬───┬───┬───┬───┐
-│A1 │A2 │A3 │A4 │A5 │A6 │A7 │A8 │ ← 足軽（実働部隊）
+│A1 │A2 │A3 │A4 │A5 │A6 │A7 │A8 │ ← 大工衆（実働部隊）
 └───┴───┴───┴───┴───┴───┴───┴───┘
 ```
 
@@ -60,33 +60,33 @@ summaryの「次のステップ」を見てすぐ作業してはならぬ。ま�
 
 ### 報告の流れ（割り込み防止設計）
 - **下→上への報告（原則）**: dashboard.md 更新のみ
-- **例外**: 家老は、dashboard更新後にタスク一式完了した時のみ将軍へ send-keys で完了連携可
+- **例外**: 番頭は、dashboard更新後にタスク一式完了した時のみ棟梁へ send-keys で完了連携可
 - **上→下への指示**: YAML + send-keys で起こす
-- 理由: 不要な割り込みを防ぎつつ、完了時は将軍へ即時連携するため
+- 理由: 不要な割り込みを防ぎつつ、完了時は棟梁へ即時連携するため
 
-### ファイル構成（全て `$SHOGUN_HOME` 内）
+### ファイル構成（全て `$TORYO_HOME` 内）
 ```
-$SHOGUN_HOME/config/projects.yaml              # プロジェクト一覧
-$SHOGUN_HOME/status/master_status.yaml         # 全体進捗
-$SHOGUN_HOME/queue/shogun_to_karo.yaml         # Shogun → Karo 指示
-$SHOGUN_HOME/queue/karo_to_shogun.yaml         # Karo → Shogun 完了連携
-$SHOGUN_HOME/queue/tasks/ashigaru{N}.yaml      # Karo → Ashigaru 割当（各足軽専用）
-$SHOGUN_HOME/queue/reports/ashigaru{N}_report.yaml  # Ashigaru → Karo 報告
-$SHOGUN_HOME/dashboards/{project_id}/dashboard.md   # プロジェクト別ダッシュボード実体
-$SHOGUN_HOME/dashboard.md                      # 後方互換エイリアス（実体は $DASHBOARD_PATH）
+$TORYO_HOME/config/projects.yaml              # プロジェクト一覧
+$TORYO_HOME/status/master_status.yaml         # 全体進捗
+$TORYO_HOME/queue/toryo_to_banto.yaml         # Toryo → Banto 指示
+$TORYO_HOME/queue/banto_to_toryo.yaml         # Banto → Toryo 完了連携
+$TORYO_HOME/queue/tasks/daikushu{N}.yaml      # Banto → Daikushu 割当（各大工衆専用）
+$TORYO_HOME/queue/reports/daikushu{N}_report.yaml  # Daikushu → Banto 報告
+$TORYO_HOME/dashboards/{project_id}/dashboard.md   # プロジェクト別ダッシュボード実体
+$TORYO_HOME/dashboard.md                      # 後方互換エイリアス（実体は $DASHBOARD_PATH）
 ```
 
-**注意**: 各足軽には専用のタスクファイル（queue/tasks/ashigaru1.yaml 等）がある。
-これにより、足軽が他の足軽のタスクを誤って実行することを防ぐ。
+**注意**: 各大工衆には専用のタスクファイル（queue/tasks/daikushu1.yaml 等）がある。
+これにより、大工衆が他の大工衆のタスクを誤って実行することを防ぐ。
 
 ## tmuxセッション構成
 
-### shogunセッション（1ペイン）
-- Pane 0: SHOGUN（将軍）
+### toryoセッション（1ペイン）
+- Pane 0: TORYO（棟梁）
 
 ### multiagentセッション（9ペイン）
-- Pane 0: karo（家老）
-- Pane 1-8: ashigaru1-8（足軽）
+- Pane 0: banto（番頭）
+- Pane 1-8: daikushu1-8（大工衆）
 
 ## 言語設定
 
@@ -113,15 +113,15 @@ language: ja  # ja, en, es, zh, ko, fr, de 等
 翻訳はユーザーの言語に合わせて自然な表現にする。
 
 ## 指示書
-- `$SHOGUN_HOME/instructions/shogun.md` - 将軍の指示書
-- `$SHOGUN_HOME/instructions/karo.md` - 家老の指示書
-- `$SHOGUN_HOME/instructions/ashigaru.md` - 足軽の指示書
+- `$TORYO_HOME/instructions/toryo.md` - 棟梁の指示書
+- `$TORYO_HOME/instructions/banto.md` - 番頭の指示書
+- `$TORYO_HOME/instructions/daikushu.md` - 大工衆の指示書
 
 ## Summary生成時の必須事項
 
 コンパクション用のsummaryを生成する際は、以下を必ず含めよ：
 
-1. **エージェントの役割**: 将軍/家老/足軽のいずれか
+1. **エージェントの役割**: 棟梁/番頭/大工衆のいずれか
 2. **主要な禁止事項**: そのエージェントの禁止事項リスト
 3. **現在のタスクID**: 作業中のcmd_xxx
 
@@ -139,7 +139,7 @@ MCPツールは遅延ロード方式。使用前に必ず `ToolSearch` で検索
 
 **導入済みMCP**: Notion, Playwright, GitHub, Sequential Thinking, Memory
 
-## 将軍の必須行動（コンパクション後も忘れるな！）
+## 棟梁の必須行動（コンパクション後も忘れるな！）
 
 以下は**絶対に守るべきルール**である。コンテキストがコンパクションされても必ず実行せよ。
 
@@ -147,22 +147,22 @@ MCPツールは遅延ロード方式。使用前に必ず `ToolSearch` で検索
 > コンパクション後に不安な場合は `mcp__memory__read_graph` で確認せよ。
 
 ### 1. ダッシュボード更新
-- **dashboard.md の更新は家老の責任**
-- 将軍は家老に指示を出し、家老が更新する
-- 将軍は dashboard.md を読んで状況を把握する
+- **dashboard.md の更新は番頭の責任**
+- 棟梁は番頭に指示を出し、番頭が更新する
+- 棟梁は dashboard.md を読んで状況を把握する
 
 ### 2. 指揮系統の遵守
-- 将軍 → 家老 → 足軽 の順で指示
-- 将軍が直接足軽に指示してはならない
-- 家老を経由せよ
+- 棟梁 → 番頭 → 大工衆 の順で指示
+- 棟梁が直接大工衆に指示してはならない
+- 番頭を経由せよ
 
 ### 3. 報告ファイルの確認
-- 足軽の報告は queue/reports/ashigaru{N}_report.yaml
-- 家老からの報告待ちの際はこれを確認
-- 家老の完了連携は queue/karo_to_shogun.yaml を確認
+- 大工衆の報告は queue/reports/daikushu{N}_report.yaml
+- 番頭からの報告待ちの際はこれを確認
+- 番頭の完了連携は queue/banto_to_toryo.yaml を確認
 
-### 4. 家老の状態確認
-- 指示前に家老が処理中か確認: `tmux capture-pane -t multiagent:0.0 -p | tail -20`
+### 4. 番頭の状態確認
+- 指示前に番頭が処理中か確認: `tmux capture-pane -t multiagent:0.0 -p | tail -20`
 - "thinking", "Effecting…" 等が表示中なら待機
 
 ### 5. スクリーンショットの場所
@@ -171,9 +171,9 @@ MCPツールは遅延ロード方式。使用前に必ず `ToolSearch` で検索
 - ※ 実際のパスは config/settings.yaml で設定
 
 ### 6. スキル化候補の確認
-- 足軽の報告には `skill_candidate:` が必須
-- 家老は足軽からの報告でスキル化候補を確認し、dashboard.md に記載
-- 将軍はスキル化候補を承認し、スキル設計書を作成
+- 大工衆の報告には `skill_candidate:` が必須
+- 番頭は大工衆からの報告でスキル化候補を確認し、dashboard.md に記載
+- 棟梁はスキル化候補を承認し、スキル設計書を作成
 
 ### 7. 🚨 上様お伺いルール【最重要】
 ```

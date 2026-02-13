@@ -9,9 +9,9 @@ language: ja
 # スキル設定
 skill:
   # スキル保存先（生成されたスキルはここに保存）
-  save_path: "~/.claude/skills/shogun-generated/"
+  save_path: "~/.claude/skills/toryo-generated/"
 
-  # ローカルスキル保存先（$SHOGUN_HOME相対）
+  # ローカルスキル保存先（$TORYO_HOME相対）
   local_path: "skills/"
 
 # スクリーンショット設定
@@ -24,4 +24,4 @@ screenshot:
 # ログ設定
 logging:
   level: info  # debug | info | warn | error
-  path: "logs/"  # $SHOGUN_HOME相対
+  path: "logs/"  # $TORYO_HOME相対

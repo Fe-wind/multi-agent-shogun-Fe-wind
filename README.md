@@ -18,7 +18,7 @@
 
 ## What is this?
 
-**multi-agent-shogun** is a system that runs multiple Claude Code instances simultaneously, organized like a feudal Japanese army.
+**multi-agent-shogun** is a system that runs multiple Claude Code instances simultaneously, organized like a master-carpenter workshop hierarchy.
 
 **Why use this?**
 - Give one command, get 8 AI workers executing in parallel
@@ -31,17 +31,17 @@
              │
              ▼ Give orders
       ┌─────────────┐
-      │   SHOGUN    │  ← Receives your command, delegates immediately
+      │   TORYO    │  ← Receives your command, delegates immediately
       └──────┬──────┘
              │ YAML files + tmux
       ┌──────▼──────┐
-      │    KARO     │  ← Distributes tasks to workers
+      │    BANTO     │  ← Distributes tasks to workers
       └──────┬──────┘
              │
     ┌─┬─┬─┬─┴─┬─┬─┬─┐
     │1│2│3│4│5│6│7│8│  ← 8 workers execute in parallel
     └─┴─┴─┴─┴─┴─┴─┴─┘
-        ASHIGARU
+        DAIKUSHU
 ```
 
 ---
@@ -183,7 +183,7 @@ Then restart your computer and run `install.bat` again.
 - ✅ Creates necessary directories
 
 ### What `shutsujin_departure.sh` does:
-- ✅ Creates tmux sessions (shogun + multiagent)
+- ✅ Creates tmux sessions (toryo + multiagent)
 - ✅ Launches Claude Code on all 10 agents
 - ✅ Automatically loads instruction files for each agent
 - ✅ Resets queue files for a fresh start
@@ -217,12 +217,12 @@ After running either option, **10 AI agents** will start automatically:
 
 | Agent | Role | Quantity |
 |-------|------|----------|
-| 🏯 Shogun | Commander - receives your orders | 1 |
-| 📋 Karo | Manager - distributes tasks | 1 |
-| ⚔️ Ashigaru | Workers - execute tasks in parallel | 8 |
+| 🏯 Toryo | Master carpenter - receives your orders | 1 |
+| 📋 Banto | Foreman - distributes tasks | 1 |
+| ⚔️ Daikushu | Craft workers - execute tasks in parallel | 8 |
 
 You'll see tmux sessions created:
-- `shogun` - Connect here to give commands
+- `toryo` - Connect here to give commands
 - `multiagent` - Workers running in background
 
 ---
@@ -235,16 +235,17 @@ multi-agent-shogun can be installed in a fixed location and **launched from any 
 
 | Variable | Meaning | Auto-set |
 |----------|---------|----------|
-| `SHOGUN_HOME` | Tool installation directory | Resolved from script location |
+| `TORYO_HOME` | Tool installation directory | Resolved from script location |
 | `PROJECT_DIR` | Target project directory | Current directory, or specified with `-p` |
 | `PROJECT_ID` | Resolved project identifier | From `config/projects.yaml` path match, else `basename(PROJECT_DIR)` |
-| `DASHBOARD_PATH` | Active dashboard file | `$SHOGUN_HOME/dashboards/{project_id}/dashboard.md` |
+| `DASHBOARD_PATH` | Active dashboard file | `$TORYO_HOME/dashboards/{project_id}/dashboard.md` |
 
 - All tmux panes' working directory is set to `PROJECT_DIR`
-- System files (queue/, config/, etc.) are referenced from `SHOGUN_HOME`
+- System files (queue/, config/, etc.) are referenced from `TORYO_HOME`
 - Dashboard is initialized per project at `dashboards/{project_id}/dashboard.md`
-- `SHOGUN_HOME/dashboard.md` remains as a backward-compatible alias to the active project dashboard
-- When `SHOGUN_HOME == PROJECT_DIR`, it works the same as before (backward compatible)
+- `TORYO_HOME/dashboard.md` remains as a backward-compatible alias to the active project dashboard
+- If `PROJECT_DIR` is not in `config/projects.yaml`, it is auto-registered at launch
+- When `TORYO_HOME == PROJECT_DIR`, it works the same as before (backward compatible)
 
 ### How to Launch
 
@@ -257,15 +258,26 @@ cd ~/my-app
 ~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -p ~/my-app
 
 # Set up an alias for convenience (~/.bashrc)
-alias shogun='~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh'
-# → cd ~/my-app && shogun
+alias toryo='~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh'
+# → cd ~/my-app && toryo
 ```
+
+### Agent CLI Selection (After Launch Start)
+
+When startup begins (before agents are spawned), an interactive menu appears:
+
+- `1` Recommended: Toryo=`claude`, Banto=`codex`, Daikushu=`codex`
+- `2` All `claude`
+- `3` All `codex`
+- `4` Custom per role (Toryo/Banto/Daikushu)
+
+In non-interactive shells, it automatically falls back to option `1`.
 
 ### After Launch
 
 ```
-SHOGUN_HOME (~/tools/multi-agent-shogun-Fe-wind/)     PROJECT_DIR (~/my-app/)
-├── queue/          ← System communication    ├── src/          ← Ashigaru work here
+TORYO_HOME (~/tools/multi-agent-shogun-Fe-wind/)     PROJECT_DIR (~/my-app/)
+├── queue/          ← System communication    ├── src/          ← Daikushu work here
 ├── config/         ← Settings                ├── package.json
 ├── instructions/   ← Agent instructions      └── ...
 ├── dashboards/
@@ -278,48 +290,48 @@ SHOGUN_HOME (~/tools/multi-agent-shogun-Fe-wind/)     PROJECT_DIR (~/my-app/)
 
 ## 📖 Basic Usage
 
-### Step 1: Connect to Shogun
+### Step 1: Connect to Toryo
 
 After running `shutsujin_departure.sh`, all agents automatically load their instructions and are ready to work.
 
-Open a new terminal and connect to the Shogun:
+Open a new terminal and connect to the Toryo:
 
 ```bash
-tmux attach-session -t shogun
+tmux attach-session -t toryo
 ```
 
 ### Step 2: Give Your First Order
 
-The Shogun is already initialized! Just give your command:
+The Toryo is already initialized! Just give your command:
 
 ```
 Investigate the top 5 JavaScript frameworks and create a comparison table.
 ```
 
-The Shogun will:
+The Toryo will:
 1. Write the task to a YAML file
-2. Notify the Karo (manager)
+2. Notify the Banto (manager)
 3. Return control to you immediately (you don't have to wait!)
 
-Meanwhile, the Karo distributes the work to Ashigaru workers who execute in parallel.
+Meanwhile, the Banto distributes the work to Daikushu workers who execute in parallel.
 
 ### Step 3: Check Progress
 
 Open the project dashboard in your editor to see real-time status:
 
 ```bash
-cat "$SHOGUN_HOME/dashboards/$PROJECT_ID/dashboard.md"
+cat "$TORYO_HOME/dashboards/$PROJECT_ID/dashboard.md"
 # Legacy-compatible path (points to active project)
-cat "$SHOGUN_HOME/dashboard.md"
+cat "$TORYO_HOME/dashboard.md"
 ```
 
 ```markdown
 ## In Progress
 | Worker | Task | Status |
 |--------|------|--------|
-| Ashigaru 1 | React research | Running |
-| Ashigaru 2 | Vue research | Running |
-| Ashigaru 3 | Angular research | Done |
+| Daikushu 1 | React research | Running |
+| Daikushu 2 | Vue research | Running |
+| Daikushu 3 | Angular research | Done |
 ```
 
 ---
@@ -332,24 +344,24 @@ One command can spawn up to 8 parallel tasks:
 
 ```
 You: "Research 5 MCP servers"
-→ 5 Ashigaru start researching simultaneously
+→ 5 Daikushu start researching simultaneously
 → Results ready in minutes, not hours
 ```
 
 ### 🔄 2. Non-Blocking Workflow
 
-The Shogun delegates immediately and returns control to you:
+The Toryo delegates immediately and returns control to you:
 
 ```
-You: Give order → Shogun: Delegates → You: Can give next order immediately
+You: Give order → Toryo: Delegates → You: Can give next order immediately
                                            ↓
                          Workers: Execute in background
                                            ↓
-                         Karo updates dashboard
+                         Banto updates dashboard
                                            ↓
-                         Karo notifies Shogun on completion
+                         Banto notifies Toryo on completion
                                            ↓
-                         Dashboard: Shows results / Shogun can relay status
+                         Dashboard: Shows results / Toryo can relay status
 ```
 
 You never have to wait for long tasks to complete.
@@ -380,7 +392,7 @@ VSCode's Claude Code extension lets you paste screenshots to explain issues. Thi
 screenshot:
   path: "/mnt/c/Users/YourName/Pictures/Screenshots"
 
-# Then just tell the Shogun:
+# Then just tell the Toryo:
 You: "Check the latest screenshot"
 You: "Look at the last 2 screenshots"
 → AI reads and analyzes your screenshots instantly
@@ -397,11 +409,11 @@ Perfect for:
 
 | Agent | Model | Thinking | Reason |
 |-------|-------|----------|--------|
-| Shogun | Opus | Disabled | Delegation & dashboard updates don't need deep reasoning |
-| Karo | Default | Enabled | Task distribution requires careful judgment |
-| Ashigaru | Default | Enabled | Actual implementation needs full capabilities |
+| Toryo | Opus | Disabled | Delegation & dashboard updates don't need deep reasoning |
+| Banto | Default | Enabled | Task distribution requires careful judgment |
+| Daikushu | Default | Enabled | Actual implementation needs full capabilities |
 
-The Shogun uses `MAX_THINKING_TOKENS=0` to disable extended thinking, reducing latency and cost while maintaining Opus-level judgment for high-level decisions.
+The Toryo uses `MAX_THINKING_TOKENS=0` to disable extended thinking, reducing latency and cost while maintaining Opus-level judgment for high-level decisions.
 
 ### 📁 Context Management
 
@@ -409,12 +421,12 @@ The system uses a three-layer context structure for efficient knowledge sharing:
 
 | Layer | Location | Purpose |
 |-------|----------|---------|
-| Memory MCP | `memory/shogun_memory.jsonl` | Persistent memory across sessions (preferences, decisions) |
+| Memory MCP | `memory/toryo_memory.jsonl` | Persistent memory across sessions (preferences, decisions) |
 | Global | `memory/global_context.md` | System-wide settings, user preferences |
 | Project | `context/{project}.md` | Project-specific knowledge and state |
 
 This design allows:
-- Any Ashigaru to pick up work on any project
+- Any Daikushu to pick up work on any project
 - Consistent context across agent switches
 - Clear separation of concerns
 - Knowledge persistence across sessions
@@ -436,7 +448,7 @@ All projects use the same 7-section template:
 This standardized structure ensures:
 - Quick onboarding for any agent
 - Consistent information across all projects
-- Easy handoffs between Ashigaru workers
+- Easy handoffs between Daikushu workers
 
 ### 🛠️ Skills
 
@@ -444,17 +456,60 @@ Skills are not included in this repository by default.
 As you use the system, skill candidates will appear in `dashboard.md`.
 Review and approve them to grow your personal skill library.
 
+#### Codex `AGENTS.md` Examples (`$multi-agent-shogun`)
+
+Use `AGENTS.md` as the single instruction file for Codex in your project.
+
+**1. Repository-wide default**
+
+```markdown
+# AGENTS.md
+Use $multi-agent-shogun for all work that touches toryo orchestration files
+(`shutsujin_departure.sh`, `instructions/*.md`, `queue/*.yaml`, `config/*.yaml`, `dashboard.md`).
+
+Keep the protocol:
+- User -> Toryo -> Banto -> Daikushu
+- YAML for payloads, `tmux send-keys` for wake-up only
+```
+
+**2. Task-specific trigger**
+
+```markdown
+# AGENTS.md
+When the request is about setup, launch, or troubleshooting of this system,
+explicitly invoke $multi-agent-shogun before editing files.
+```
+
+**3. Subdirectory override**
+
+```markdown
+# frontend/AGENTS.md
+Inherit root AGENTS.md.
+For frontend-only changes, keep root rules.
+If compatibility with dashboard/queue/instructions is affected,
+invoke $multi-agent-shogun explicitly.
+```
+
+**4. Fallback when skill is unavailable**
+
+```markdown
+# AGENTS.md
+Primary path: use $multi-agent-shogun.
+If unavailable, read `README.md` and `instructions/{toryo,banto,daikushu}.md` first,
+then follow the same hierarchy and YAML queue protocol manually.
+```
+
 ---
 
 ## 🏛️ Design Philosophy
 
 ### Why Hierarchical Structure?
 
-The Shogun → Karo → Ashigaru hierarchy exists for:
+The Toryo → Banto → Daikushu hierarchy exists for:
 
-1. **Immediate Response**: Shogun delegates instantly and returns control to you
-2. **Parallel Execution**: Karo distributes to multiple Ashigaru simultaneously
-3. **Separation of Concerns**: Shogun decides "what", Karo decides "who"
+1. **Immediate Response**: Toryo delegates instantly and returns control to you
+2. **Parallel Execution**: Banto distributes to multiple Daikushu simultaneously
+3. **Separation of Concerns**: Toryo decides "what", Banto decides "who"
 
 ### Why YAML + send-keys?
 
@@ -462,10 +517,10 @@ The Shogun → Karo → Ashigaru hierarchy exists for:
 - **send-keys**: Event-driven wakeups (no polling = no wasted API calls)
 - **No direct calls**: Agents can't interrupt each other or your input
 
-### Why Only Karo Updates Dashboard?
+### Why Only Banto Updates Dashboard?
 
 - **Single responsibility**: One writer = no conflicts
-- **Information hub**: Karo receives all reports, knows the full picture
+- **Information hub**: Banto receives all reports, knows the full picture
 - **Consistency**: All updates go through one quality gate
 
 ### How Skills Work
@@ -478,10 +533,10 @@ Skills (`.claude/commands/`) are **not committed to this repository** by design.
 - No one-size-fits-all solution
 
 **How to create new skills:**
-1. Ashigaru report "skill candidates" when they notice repeatable patterns
+1. Daikushu report "skill candidates" when they notice repeatable patterns
 2. Candidates appear in `dashboard.md` under "Skill Candidates"
 3. You review and approve (or reject)
-4. Approved skills are created by Karo
+4. Approved skills are created by Banto
 
 This keeps skills **user-driven** — only what you find useful gets added.
 
@@ -517,7 +572,7 @@ claude mcp add github -e GITHUB_PERSONAL_ACCESS_TOKEN=your_pat_here -- npx -y @m
 claude mcp add sequential-thinking -- npx -y @modelcontextprotocol/server-sequential-thinking
 
 # 5. Memory - Long-term memory across sessions (Recommended!)
-claude mcp add memory -e MEMORY_FILE_PATH="$PWD/memory/shogun_memory.jsonl" -- npx -y @modelcontextprotocol/server-memory
+claude mcp add memory -e MEMORY_FILE_PATH="$PWD/memory/toryo_memory.jsonl" -- npx -y @modelcontextprotocol/server-memory
 ```
 
 ### Verify Installation
@@ -538,13 +593,13 @@ You should see all servers with "Connected" status.
 You: "Research the top 5 AI coding assistants and compare them"
 
 What happens:
-1. Shogun delegates to Karo
-2. Karo assigns:
-   - Ashigaru 1: Research GitHub Copilot
-   - Ashigaru 2: Research Cursor
-   - Ashigaru 3: Research Claude Code
-   - Ashigaru 4: Research Codeium
-   - Ashigaru 5: Research Amazon CodeWhisperer
+1. Toryo delegates to Banto
+2. Banto assigns:
+   - Daikushu 1: Research GitHub Copilot
+   - Daikushu 2: Research Cursor
+   - Daikushu 3: Research Claude Code
+   - Daikushu 4: Research Codeium
+   - Daikushu 5: Research Amazon CodeWhisperer
 3. All 5 research simultaneously
 4. Results compiled in dashboard.md
 ```
@@ -555,10 +610,10 @@ What happens:
 You: "Prepare a PoC for the project in this Notion page: [URL]"
 
 What happens:
-1. Karo fetches Notion content via MCP
-2. Ashigaru 2: Lists items to clarify
-3. Ashigaru 3: Researches technical feasibility
-4. Ashigaru 4: Creates PoC plan document
+1. Banto fetches Notion content via MCP
+2. Daikushu 2: Lists items to clarify
+3. Daikushu 3: Researches technical feasibility
+4. Daikushu 4: Creates PoC plan document
 5. All results in dashboard.md, ready for your meeting
 ```
 
@@ -602,7 +657,7 @@ language: en   # Japanese + English translation
 │  shutsujin_departure.sh                                             │
 │      │                                                              │
 │      ├──▶ Create tmux sessions                                      │
-│      │         • "shogun" session (1 pane)                          │
+│      │         • "toryo" session (1 pane)                          │
 │      │         • "multiagent" session (9 panes, 3x3 grid)           │
 │      │                                                              │
 │      ├──▶ Reset queue files and dashboard                           │
@@ -641,12 +696,12 @@ cd ~/my-project && ~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh
 
 | Variable | Meaning | Example |
 |----------|---------|---------|
-| `SHOGUN_HOME` | Tool installation directory | `~/tools/multi-agent-shogun-Fe-wind` |
+| `TORYO_HOME` | Tool installation directory | `~/tools/multi-agent-shogun-Fe-wind` |
 | `PROJECT_DIR` | Target project directory | `/home/user/my-app` |
 | `PROJECT_ID` | Resolved project identifier | `my-app` |
 | `DASHBOARD_PATH` | Active dashboard path | `~/tools/multi-agent-shogun-Fe-wind/dashboards/my-app/dashboard.md` |
 
-System files (queue/, config/, instructions/, etc.) live in `SHOGUN_HOME`, while actual coding work happens in `PROJECT_DIR`.
+System files (queue/, config/, instructions/, etc.) live in `TORYO_HOME`, while actual coding work happens in `PROJECT_DIR`.
 
 </details>
 
@@ -657,7 +712,7 @@ System files (queue/, config/, instructions/, etc.) live in `SHOGUN_HOME`, while
 ```bash
 cd ~/my-project
 ~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh  # Start everything
-tmux attach-session -t shogun                       # Connect to give commands
+tmux attach-session -t toryo                       # Connect to give commands
 ```
 
 **Debug Mode (manual control):**
@@ -665,14 +720,14 @@ tmux attach-session -t shogun                       # Connect to give commands
 ~/tools/multi-agent-shogun-Fe-wind/shutsujin_departure.sh -s  # Create sessions only
 
 # Manually start Claude Code on specific agents
-tmux send-keys -t shogun:0 'claude --dangerously-skip-permissions' Enter
+tmux send-keys -t toryo:0 'claude --dangerously-skip-permissions' Enter
 tmux send-keys -t multiagent:0.0 'claude --dangerously-skip-permissions' Enter
 ```
 
 **Restart After Crash:**
 ```bash
 # Kill existing sessions
-tmux kill-session -t shogun
+tmux kill-session -t toryo
 tmux kill-session -t multiagent
 
 # Start fresh
@@ -699,16 +754,16 @@ multi-agent-shogun/
 │  └────────────────────────────────────────────────────┘
 │
 ├── instructions/             # Agent instruction files
-│   ├── shogun.md             # Commander instructions
-│   ├── karo.md               # Manager instructions
-│   └── ashigaru.md           # Worker instructions
+│   ├── toryo.md             # Commander instructions
+│   ├── banto.md               # Manager instructions
+│   └── daikushu.md           # Worker instructions
 │
 ├── config/
 │   └── settings.yaml         # Language and other settings
 │
 ├── queue/                    # Communication files
-│   ├── shogun_to_karo.yaml   # Commands from Shogun to Karo
-│   ├── karo_to_shogun.yaml   # Completion notifications from Karo to Shogun
+│   ├── toryo_to_banto.yaml   # Commands from Toryo to Banto
+│   ├── banto_to_toryo.yaml   # Completion notifications from Banto to Toryo
 │   ├── tasks/                # Individual worker task files
 │   └── reports/              # Worker reports
 │
@@ -768,24 +823,24 @@ tmux attach-session -t multiagent
 <summary><b>tmux says "sessions should be nested with care"?</b></summary>
 
 Cause:
-1. Command typo like `tmux attach-session -t shoguntmux attach-session -t shogun`
+1. Command typo like `tmux attach-session -t toryotmux attach-session -t toryo`
 2. Running `attach-session` from inside an existing tmux session
 
 Use this inside tmux:
 ```bash
 tmux ls
-tmux switch-client -t shogun
+tmux switch-client -t toryo
 tmux switch-client -t multiagent
 ```
 
 Use this only from a normal shell (outside tmux):
 ```bash
-tmux attach-session -t shogun
+tmux attach-session -t toryo
 ```
 
 Force attach from inside tmux (not recommended):
 ```bash
-TMUX= tmux attach-session -t shogun
+TMUX= tmux attach-session -t toryo
 ```
 
 </details>
@@ -796,13 +851,13 @@ TMUX= tmux attach-session -t shogun
 
 | Command | Description |
 |---------|-------------|
-| `tmux attach-session -t shogun` | Connect to Shogun (outside tmux) |
+| `tmux attach-session -t toryo` | Connect to Toryo (outside tmux) |
 | `tmux attach-session -t multiagent` | Connect to workers (outside tmux) |
-| `tmux switch-client -t shogun` | Switch to Shogun (inside tmux) |
+| `tmux switch-client -t toryo` | Switch to Toryo (inside tmux) |
 | `tmux switch-client -t multiagent` | Switch to workers (inside tmux) |
 | `Ctrl+B` then `0-8` | Switch between panes |
 | `Ctrl+B` then `d` | Detach (leave running) |
-| `tmux kill-session -t shogun` | Stop Shogun session |
+| `tmux kill-session -t toryo` | Stop Toryo session |
 | `tmux kill-session -t multiagent` | Stop worker sessions |
 
 ---
@@ -821,6 +876,6 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-**Command your AI army. Build faster.**
+**Run your AI workshop. Build faster.**
 
 </div>

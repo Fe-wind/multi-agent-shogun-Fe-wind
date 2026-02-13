@@ -284,7 +284,7 @@ language: ja
 # スキル設定
 skill:
   # スキル保存先（生成されたスキルはここに保存）
-  save_path: "~/.claude/skills/shogun-generated/"
+  save_path: "~/.claude/skills/toryo-generated/"
 
   # ローカルスキル保存先（このプロジェクト専用）
   local_path: "~/multi-agent-shogun/skills/"
@@ -320,16 +320,16 @@ fi
 RESULTS+=("設定ファイル: OK")
 
 # ============================================================
-# STEP 7: 足軽用タスク・レポートファイル初期化
+# STEP 7: 大工衆用タスク・レポートファイル初期化
 # ============================================================
 log_step "STEP 7: キューファイル初期化"
 
-# 足軽用タスクファイル作成
+# 大工衆用タスクファイル作成
 for i in {1..8}; do
-    TASK_FILE="$SCRIPT_DIR/queue/tasks/ashigaru${i}.yaml"
+    TASK_FILE="$SCRIPT_DIR/queue/tasks/daikushu${i}.yaml"
     if [ ! -f "$TASK_FILE" ]; then
         cat > "$TASK_FILE" << EOF
-# 足軽${i}専用タスクファイル
+# 大工衆${i}専用タスクファイル
 task:
   task_id: null
   parent_cmd: null
@@ -340,14 +340,14 @@ task:
 EOF
     fi
 done
-log_info "足軽タスクファイル (1-8) を確認/作成しました"
+log_info "大工衆タスクファイル (1-8) を確認/作成しました"
 
-# 足軽用レポートファイル作成
+# 大工衆用レポートファイル作成
 for i in {1..8}; do
-    REPORT_FILE="$SCRIPT_DIR/queue/reports/ashigaru${i}_report.yaml"
+    REPORT_FILE="$SCRIPT_DIR/queue/reports/daikushu${i}_report.yaml"
     if [ ! -f "$REPORT_FILE" ]; then
         cat > "$REPORT_FILE" << EOF
-worker_id: ashigaru${i}
+worker_id: daikushu${i}
 task_id: null
 timestamp: ""
 status: idle
@@ -355,35 +355,35 @@ result: null
 EOF
     fi
 done
-log_info "足軽レポートファイル (1-8) を確認/作成しました"
+log_info "大工衆レポートファイル (1-8) を確認/作成しました"
 
-# 将軍↔家老キューファイル
-if [ ! -f "$SCRIPT_DIR/queue/shogun_to_karo.yaml" ]; then
-    cat > "$SCRIPT_DIR/queue/shogun_to_karo.yaml" << 'EOF'
+# 棟梁↔番頭キューファイル
+if [ ! -f "$SCRIPT_DIR/queue/toryo_to_banto.yaml" ]; then
+    cat > "$SCRIPT_DIR/queue/toryo_to_banto.yaml" << 'EOF'
 queue: []
 EOF
 fi
 
-if [ ! -f "$SCRIPT_DIR/queue/karo_to_shogun.yaml" ]; then
-    cat > "$SCRIPT_DIR/queue/karo_to_shogun.yaml" << 'EOF'
+if [ ! -f "$SCRIPT_DIR/queue/banto_to_toryo.yaml" ]; then
+    cat > "$SCRIPT_DIR/queue/banto_to_toryo.yaml" << 'EOF'
 notifications: []
 EOF
 fi
 
-if [ ! -f "$SCRIPT_DIR/queue/karo_to_ashigaru.yaml" ]; then
-    cat > "$SCRIPT_DIR/queue/karo_to_ashigaru.yaml" << 'EOF'
+if [ ! -f "$SCRIPT_DIR/queue/banto_to_daikushu.yaml" ]; then
+    cat > "$SCRIPT_DIR/queue/banto_to_daikushu.yaml" << 'EOF'
 assignments:
-  ashigaru1: { task_id: null, description: null, target_path: null, status: idle }
-  ashigaru2: { task_id: null, description: null, target_path: null, status: idle }
-  ashigaru3: { task_id: null, description: null, target_path: null, status: idle }
-  ashigaru4: { task_id: null, description: null, target_path: null, status: idle }
-  ashigaru5: { task_id: null, description: null, target_path: null, status: idle }
-  ashigaru6: { task_id: null, description: null, target_path: null, status: idle }
-  ashigaru7: { task_id: null, description: null, target_path: null, status: idle }
-  ashigaru8: { task_id: null, description: null, target_path: null, status: idle }
+  daikushu1: { task_id: null, description: null, target_path: null, status: idle }
+  daikushu2: { task_id: null, description: null, target_path: null, status: idle }
+  daikushu3: { task_id: null, description: null, target_path: null, status: idle }
+  daikushu4: { task_id: null, description: null, target_path: null, status: idle }
+  daikushu5: { task_id: null, description: null, target_path: null, status: idle }
+  daikushu6: { task_id: null, description: null, target_path: null, status: idle }
+  daikushu7: { task_id: null, description: null, target_path: null, status: idle }
+  daikushu8: { task_id: null, description: null, target_path: null, status: idle }
 EOF
 fi
-log_info "将軍・家老キューファイルを確認/作成しました"
+log_info "棟梁・番頭キューファイルを確認/作成しました"
 
 RESULTS+=("キューファイル: OK")
 
